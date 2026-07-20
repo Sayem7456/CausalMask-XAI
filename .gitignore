@@ -1,0 +1,52 @@
+# Raw datasets and archives
+Dataset/
+data/raw/archives/*
+data/raw/extracted/*
+!data/raw/archives/.gitkeep
+!data/raw/extracted/.gitkeep
+
+# Caches
+data/cache/*
+!data/cache/.gitkeep
+
+# Checkpoints
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+
+# Generated run artifacts
+artifacts/runs/*
+!artifacts/runs/.gitkeep
+!artifacts/phases/.gitkeep
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+__pycache__/
+*.pyc
+
+# Secrets
+*.secret
+*.key
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Reports that should not be version-controlled
+reports/results/*.png
+reports/results/*.pdf
