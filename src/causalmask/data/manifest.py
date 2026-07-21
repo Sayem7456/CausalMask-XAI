@@ -188,14 +188,54 @@ def discover_busi_files(busi_extract_dir: Path) -> list[dict]:
     return _discover_labeled_images(data_root)
 
 
-def discover_bus_uclm_files(uclm_extract_dir: Path) -> list[dict]:
-    preferred = uclm_extract_dir / "bus_uclm_separated"
-    if preferred.exists():
-        return _discover_labeled_images(preferred)
+def _find_masks_dir(root: Path) -> Optional[Path]:
+    """Walk down from root to find a directory named 'masks'."""
+    for candidate in root.rglob("masks"):
+        if candidate.is_dir():
+            return candidate
+    return None
 
-    alt = uclm_extract_dir / "BUS-UCLM Breast ultrasound lesion segmentation dataset"
-    if alt.exists():
-        return _discover_labeled_images(alt)
+
+def _find_images_dir(root: Path) -> Optional[Path]:
+    """Walk down from root to find a directory named 'images'."""
+    for candidate in root.rglob("images"):
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def _resolve_masks_from_original(
+    samples: list[dict], original: Path
+) -> list[dict]:
+    masks_dir = _find_masks_dir(original)
+    if masks_dir is None:
+        return samples
+
+    mask_index: dict[str, Path] = {}
+    for m in masks_dir.iterdir():
+        if m.is_file():
+            mask_index[m.stem] = m
+
+    for s in samples:
+        if not s["mask_paths"]:
+            stem = s["image_path"].stem
+            if stem in mask_index:
+                s["mask_paths"] = [mask_index[stem]]
+    return samples
+
+
+def discover_bus_uclm_files(uclm_extract_dir: Path) -> list[dict]:
+    separated = uclm_extract_dir / "bus_uclm_separated"
+    original = uclm_extract_dir / "BUS-UCLM Breast ultrasound lesion segmentation dataset"
+
+    if separated.exists():
+        samples = _discover_labeled_images(separated)
+        if original.exists():
+            samples = _resolve_masks_from_original(samples, original)
+        return samples
+
+    if original.exists():
+        return _discover_labeled_images(original)
 
     if any(uclm_extract_dir.iterdir()):
         return _discover_labeled_images(uclm_extract_dir)
