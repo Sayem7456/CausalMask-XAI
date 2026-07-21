@@ -81,7 +81,7 @@ def paired_random_affine(
     """Random affine transform applied identically to image and mask."""
     def _apply(image: Tensor, mask: Tensor | None) -> tuple[Tensor, Tensor | None]:
         params = T.RandomAffine.get_params(
-            degrees=[-degrees, degrees] if degrees > 0 else None,
+            degrees=[-degrees, degrees] if degrees > 0 else [],
             translate=translate,
             scale_ranges=scale,
             shears=None,
