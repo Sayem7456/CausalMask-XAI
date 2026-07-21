@@ -124,17 +124,20 @@ def build_train_transforms(
         T.Normalize(mean=mean, std=std),
     ])
 
-    paired = PairedCompose(
-        image_transforms=[
-            paired_horizontal_flip(p=hflip_prob),
-            paired_random_rotation(degrees=rotation_degrees),
+    paired_transforms = [
+        paired_horizontal_flip(p=hflip_prob),
+        paired_random_rotation(degrees=rotation_degrees),
+    ]
+    if rotation_degrees > 0 or translate_max > 0 or scale_min != 1.0 or scale_max != 1.0:
+        paired_transforms.append(
             paired_random_affine(
-                degrees=0,
+                degrees=rotation_degrees,
                 translate=(translate_max, translate_max),
                 scale=(scale_min, scale_max),
             ),
-        ],
-    )
+        )
+    
+    paired = PairedCompose(image_transforms=paired_transforms)
     return image_only, paired
 
 
