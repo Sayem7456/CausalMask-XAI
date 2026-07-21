@@ -1,0 +1,55 @@
+{
+  "generated_utc": "2026-07-20T09:57:07.239743+00:00",
+  "phase": "01",
+  "project_root": "/content/CausalMask-XAI",
+  "sources": [
+    {
+      "name": "BUSI",
+      "role": "primary",
+      "url": "https://www.kaggle.com/api/v1/datasets/download/sabahesaraki/breast-ultrasound-images-dataset",
+      "archive_filename": "breast-ultrasound-images-dataset.zip",
+      "archive_path": "/content/CausalMask-XAI/data/raw/archives/breast-ultrasound-images-dataset.zip",
+      "archive_sha256": "bcbbb07c5f93210f9ff95469f9cc338a2540afa6a955838d538cd0f08999770e",
+      "archive_size_bytes": 204421470,
+      "download_status": "downloaded",
+      "download_timestamp_utc": "2026-07-20T09:57:07.239743+00:00",
+      "extraction_directory": "/content/CausalMask-XAI/data/raw/extracted/busi",
+      "extraction_status": "extracted",
+      "total_extracted_files": 1578,
+      "files_by_extension": { ".png": 1578 },
+      "top_level_directory_structure": ["Dataset_BUSI_with_GT"],
+      "discovered_structure": {
+        "data_root": "Dataset_BUSI_with_GT",
+        "label_dirs": ["benign", "malignant", "normal"],
+        "mask_convention": "<image_name>_mask.png"
+      }
+    },
+    {
+      "name": "BUS-UCLM",
+      "role": "external_validation",
+      "url": "https://www.kaggle.com/api/v1/datasets/download/orvile/bus-uclm-breast-ultrasound-dataset",
+      "archive_filename": "bus-uclm-breast-ultrasound-dataset.zip",
+      "archive_path": "/content/CausalMask-XAI/data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+      "archive_sha256": "88ac46278b72477a55aafe7814ba5475c0e01c51df1a996958e58c4f55f7459b",
+      "archive_size_bytes": 672995684,
+      "download_status": "downloaded",
+      "download_timestamp_utc": "2026-07-20T09:57:07.239743+00:00",
+      "extraction_directory": "/content/CausalMask-XAI/data/raw/extracted/bus_uclm",
+      "extraction_status": "extracted",
+      "total_extracted_files": 2050,
+      "files_by_extension": { ".png": 2049, ".csv": 1 },
+      "top_level_directory_structure": [
+        "BUS-UCLM Breast ultrasound lesion segmentation dataset",
+        "bus_uclm_separated"
+      ],
+      "discovered_structure": {
+        "data_roots": [
+          "bus_uclm_separated",
+          "BUS-UCLM Breast ultrasound lesion segmentation dataset"
+        ],
+        "label_dirs": ["benign", "malignant", "normal"],
+        "mask_convention": "<image_name>_mask.png"
+      }
+    }
+  ]
+}
