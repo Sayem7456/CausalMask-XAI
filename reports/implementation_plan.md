@@ -4,57 +4,82 @@
 
 - Project structure established
 - Reproducibility helpers created
-- Environment notebook created
+- Environment notebook created (`00_environment_and_repository_audit.ipynb`)
 
-## Phase 1 — Dataset Audit and Split Preparation
+## Phase 1 — Dataset Download [COMPLETED]
 
-- Download and audit BUSI and BUS-UCLM datasets
-- Near-duplicate detection
-- Patient-aware stratified splitting
-- Manifest generation
+- Download BUSI and BUS-UCLM archives
+- Extract and organize raw files
+- Create `data/raw/dataset_sources.json`
+- Notebook: `01_download_and_extract_datasets.ipynb`
 
-## Phase 2 — Baseline Training
+## Phase 2 — Dataset Manifest and Quality Audit [COMPLETED]
 
-- EfficientNet-B0 and ResNet-18 baselines
-- Five-fold stratified cross-validation
-- Evaluation metrics: AUROC, balanced accuracy, sensitivity, specificity, F1, ECE
+- Discover and pair images with masks
+- Generate immutable manifests with SHA-256 checksums
+- Validate quality flags, label mapping, and mask coverage
+- Save manifests as Parquet
+- Notebook: `02_dataset_manifest_and_quality_audit.ipynb`
+- **Gate passed**
 
-## Phase 3 — XAI Methods
+## Phase 3 — Duplicate Audit and Fixed Splits [COMPLETED]
 
-- Grad-CAM, Grad-CAM++, Integrated Gradients, RISE
-- Sanity checks (model randomization)
-- Robustness testing
+- SHA-256 exact duplicate detection
+- Perceptual hash near-duplicate detection
+- SSIM verification of candidate pairs
+- Group-aware five-fold stratified split
+- Split digest and manifest digest recorded
+- Notebook: `03_duplicate_audit_and_fixed_splits.ipynb`
+- **Gate passed**
 
-## Phase 4 — Counterfactual Generation
+## Phase 4 — Baseline Pipeline Smoke Test [COMPLETED]
+
+- Implemented:
+  - `src/causalmask/reproducibility.py` (enhanced)
+  - `src/causalmask/data/transforms.py` — paired image-mask transforms
+  - `src/causalmask/models/factory.py` — EfficientNet-B0, ResNet-18
+  - `src/causalmask/training/engine.py` — training loop with AMP, early stopping
+  - `src/causalmask/training/checkpointing.py` — save/resume
+  - `src/causalmask/evaluation/classification.py` — AUROC, accuracy, F1, etc.
+  - `src/causalmask/evaluation/calibration.py` — ECE, MCE, Brier
+- One-epoch smoke test completed with synthetic data
+- Checkpoint save/resume verified
+- Prediction export tested
+- 90 unit tests pass
+- All outputs labelled **smoke**
+- No full cross-validation or external evaluation
+- **Status:** smoke-tested
+
+## Phase 5 — Counterfactual Generation [PLANNED]
 
 - Lesion-sufficient images
 - Lesion-removed images
 - Background-swapped images
 - Mask dilation ablation
 
-## Phase 5 — CausalMask Score
+## Phase 6 — CausalMask Score [PLANNED]
 
 - Necessity, sufficiency, invariance, localization
 - Harmonic mean combination
 - Score analysis and visualization
 
-## Phase 6 — Causal Regularization
+## Phase 7 — Causal Regularization [PLANNED]
 
 - Training with combined loss
 - Hyperparameter selection
 - Comparison against baselines
 
-## Phase 7 — External Validation
+## Phase 8 — External Validation [PLANNED]
 
 - BUS-UCLM frozen test set
 - Cross-dataset generalization
 
-## Phase 8 — Ablations and Statistics
+## Phase 9 — Ablations and Statistics [PLANNED]
 
 - Loss component ablations
 - Mask dilation experiments
 - Bootstrap CIs and statistical tests
 
-## Phase 9 — Final Report
+## Phase 10 — Final Report [PLANNED]
 
 - Figures, tables, paper preparation

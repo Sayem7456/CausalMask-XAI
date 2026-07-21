@@ -1,0 +1,52 @@
+{
+  "dataset": "busi",
+  "manifest_version": "v1",
+  "total_samples": 780,
+  "primary_task_samples": 647,
+  "excluded_normal_samples": 133,
+  "label_distribution": {
+    "benign": 437,
+    "malignant": 210,
+    "normal": 133
+  },
+  "samples_with_masks": 780,
+  "samples_without_masks": 0,
+  "flagged_samples": 199,
+  "quality_flag_distribution": {
+    "empty_mask": 133,
+    "very_small_mask": 66
+  },
+  "image_dimensions": {
+    "image_width": {
+      "count": 780.0,
+      "mean": 615.6794871794872,
+      "std": 122.05570116613332,
+      "min": 190.0,
+      "25%": 554.0,
+      "50%": 564.0,
+      "75%": 713.5,
+      "max": 1048.0
+    },
+    "image_height": {
+      "count": 780.0,
+      "mean": 501.4525641025641,
+      "std": 76.68794815775634,
+      "min": 310.0,
+      "25%": 465.0,
+      "50%": 474.0,
+      "75%": 574.0,
+      "max": 719.0
+    },
+    "channels": {
+      "count": 780.0,
+      "mean": 3.0,
+      "std": 0.0,
+      "min": 3.0,
+      "25%": 3.0,
+      "50%": 3.0,
+      "75%": 3.0,
+      "max": 3.0
+    }
+  },
+  "timestamp_utc": "2026-07-21T06:13:39.213574+00:00"
+}

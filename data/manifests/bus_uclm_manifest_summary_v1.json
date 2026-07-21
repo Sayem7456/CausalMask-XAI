@@ -1,0 +1,50 @@
+{
+  "dataset": "bus_uclm",
+  "manifest_version": "v1",
+  "total_samples": 593,
+  "primary_task_samples": 174,
+  "excluded_normal_samples": 419,
+  "label_distribution": {
+    "normal": 419,
+    "benign": 174
+  },
+  "samples_with_masks": 593,
+  "samples_without_masks": 0,
+  "flagged_samples": 593,
+  "quality_flag_distribution": {
+    "empty_mask": 593
+  },
+  "image_dimensions": {
+    "image_width": {
+      "count": 593.0,
+      "mean": 852.2428330522765,
+      "std": 28.00352994280467,
+      "min": 608.0,
+      "25%": 856.0,
+      "50%": 856.0,
+      "75%": 856.0,
+      "max": 856.0
+    },
+    "image_height": {
+      "count": 593.0,
+      "mean": 603.3591905564924,
+      "std": 17.671958835211917,
+      "min": 468.0,
+      "25%": 606.0,
+      "50%": 606.0,
+      "75%": 606.0,
+      "max": 606.0
+    },
+    "channels": {
+      "count": 593.0,
+      "mean": 3.0219224283305226,
+      "std": 0.14655393131295535,
+      "min": 3.0,
+      "25%": 3.0,
+      "50%": 3.0,
+      "75%": 3.0,
+      "max": 4.0
+    }
+  },
+  "timestamp_utc": "2026-07-21T06:13:39.225247+00:00"
+}
