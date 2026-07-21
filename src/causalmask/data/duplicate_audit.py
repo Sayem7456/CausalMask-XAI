@@ -184,7 +184,7 @@ def find_near_duplicate_candidates(
     sample_id_col: str = "sample_id",
     phash_col: str = "phash",
     similarity_threshold: float = 0.75,
-    min_similarity: float = 0.4,
+    min_similarity: float = 0.75,
 ) -> pd.DataFrame:
     """Find near-duplicate candidate pairs by pHash similarity.
 
