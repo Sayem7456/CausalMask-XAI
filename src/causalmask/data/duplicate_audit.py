@@ -402,24 +402,21 @@ def assign_duplicate_clusters(
     for sid in sample_ids:
         root = find(sid)
         near_key = f"near_{root}"
-        cluster = cluster_map.get(near_key, sid)
+        in_near_cluster = near_key in cluster_map
+        cluster = cluster_map.get(near_key, root)
         exact_cluster = exact_cluster_map.get(sid, "")
-        near_duplicate = cluster != sid
 
         results.append(
             {
                 sample_id_col: sid,
                 "group_id": cluster,
                 "near_duplicate_cluster": cluster
-                if near_duplicate
+                if in_near_cluster
                 else "",
                 "exact_duplicate_cluster": exact_cluster,
                 "is_exact_duplicate": bool(exact_cluster),
-                "is_near_duplicate": near_duplicate,
-                "cluster_size": sum(
-                    1 for r in results if r["group_id"] == cluster
-                )
-                + (1 if cluster == sid else 0),
+                "is_near_duplicate": in_near_cluster,
+                "cluster_size": 1,
             }
         )
 

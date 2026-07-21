@@ -260,6 +260,8 @@ def validate_split_disjointness(
     sample_id_col: str = "sample_id",
     dataset_col: str = "dataset",
     external_datasets: Optional[list[str]] = None,
+    valid_labels: Optional[list[str]] = None,
+    label_col: str = "normalized_label",
 ) -> dict:
     """Validate that the split satisfies all disjointness requirements.
 
@@ -276,6 +278,8 @@ def validate_split_disjointness(
     """
     if external_datasets is None:
         external_datasets = ["bus_uclm"]
+    if valid_labels is None:
+        valid_labels = ["benign", "malignant"]
 
     results = {
         "passed": True,
@@ -362,8 +366,11 @@ def validate_split_disjointness(
     for fold_data in split_dict["folds"].values():
         all_test_ids.update(fold_data["test"])
 
-    all_internal_ids = set(manifest_df[
+    internal_df = manifest_df[
         ~manifest_df[dataset_col].isin(external_datasets)
+    ]
+    all_internal_ids = set(internal_df[
+        internal_df[label_col].isin(valid_labels)
     ][sample_id_col].tolist())
 
     uncovered = all_internal_ids - all_test_ids
