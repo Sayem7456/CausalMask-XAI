@@ -322,3 +322,120 @@ class TestDiscoverBusiFiles:
         assert len(samples) == 1
         assert samples[0]["normalized_label"] == "benign"
         assert len(samples[0]["mask_paths"]) == 1
+
+
+class TestExtractRelConsistency:
+    """Verify that extract_rel paths in config cells match manifest path convention.
+
+    The manifest stores image_path relative to project_root using lowercase
+    dataset directory names (e.g. 'data/raw/extracted/busi/...'). Notebook
+    configs must use the same lowercase paths so that image loading succeeds.
+    """
+
+    @pytest.mark.parametrize("nb_name,expected", [
+        ("01_download_and_extract_datasets", [
+            "data/raw/extracted/busi",
+            "data/raw/extracted/bus_uclm",
+        ]),
+        ("02_dataset_manifest_and_quality_audit", [
+            "data/raw/extracted/busi",
+            "data/raw/extracted/bus_uclm",
+        ]),
+        ("03_duplicate_audit_and_fixed_splits", [
+            "data/raw/extracted/busi",
+            "data/raw/extracted/bus_uclm",
+        ]),
+        ("04_baseline_pipeline_smoke_test", [
+            "data/raw/extracted/busi",
+            "data/raw/extracted/bus_uclm",
+        ]),
+        ("05_baseline_five_fold_cross_validation", [
+            "data/raw/extracted/busi",
+            "data/raw/extracted/bus_uclm",
+        ]),
+    ])
+    def test_extract_rel_matches_manifest_convention(self, nb_name, expected):
+        import json
+        from pathlib import Path
+        nb_path = Path(__file__).parents[2] / "notebooks" / f"{nb_name}.ipynb"
+        assert nb_path.exists(), f"Notebook not found: {nb_path}"
+
+        with open(nb_path) as f:
+            nb = json.load(f)
+
+        found = []
+        for cell in nb["cells"]:
+            for line in cell.get("source", []):
+                if "extract_rel" in line and ("busi" in line.lower() or "uclm" in line.lower()):
+                    val = line.split(":")[-1].strip().strip('",')
+                    val = val.rstrip(",")
+                    found.append(val)
+
+        for exp in expected:
+            assert exp in found, (
+                f"{nb_name}: expected extract_rel '{exp}' not found in config. "
+                f"Found: {found}. Case mismatch causes FileNotFoundError on Colab "
+                f"because manifest paths use lowercase dataset dir names."
+            )
+
+    @pytest.mark.parametrize("nb_name,expected_archives", [
+        (
+            "01_download_and_extract_datasets",
+            [
+                "data/raw/archives/breast-ultrasound-images-dataset.zip",
+                "data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+            ],
+        ),
+        (
+            "02_dataset_manifest_and_quality_audit",
+            [
+                "data/raw/archives/breast-ultrasound-images-dataset.zip",
+                "data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+            ],
+        ),
+        (
+            "03_duplicate_audit_and_fixed_splits",
+            [
+                "data/raw/archives/breast-ultrasound-images-dataset.zip",
+                "data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+            ],
+        ),
+        (
+            "04_baseline_pipeline_smoke_test",
+            [
+                "data/raw/archives/breast-ultrasound-images-dataset.zip",
+                "data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+            ],
+        ),
+        (
+            "05_baseline_five_fold_cross_validation",
+            [
+                "data/raw/archives/breast-ultrasound-images-dataset.zip",
+                "data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip",
+            ],
+        ),
+    ])
+    def test_archive_rel_matches_phase_1_2_convention(self, nb_name, expected_archives):
+        import json
+        from pathlib import Path
+        nb_path = Path(__file__).parents[2] / "notebooks" / f"{nb_name}.ipynb"
+        assert nb_path.exists(), f"Notebook not found: {nb_path}"
+
+        with open(nb_path) as f:
+            nb = json.load(f)
+
+        found = []
+        for cell in nb["cells"]:
+            for line in cell.get("source", []):
+                if "archive_rel" in line:
+                    val = line.split(":")[-1].strip().strip('",')
+                    val = val.rstrip(",")
+                    if val.startswith("data/raw/archives/"):
+                        found.append(val)
+
+        for exp in expected_archives:
+            assert exp in found, (
+                f"{nb_name}: expected archive_rel '{exp}' not found in config. "
+                f"Found: {found}. Phase 4/5 must match Phase 1/2/3 archive filenames "
+                f"so that Drive restore finds the correct archives."
+            )
