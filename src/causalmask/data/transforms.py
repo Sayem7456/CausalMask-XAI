@@ -120,7 +120,7 @@ def build_train_transforms(
     and paired_transform handles geometric augmentations.
     """
     image_only = T.Compose([
-        T.ConvertImageDtype(torch.float32),
+        T.ToTensor(),
         T.Normalize(mean=mean, std=std),
     ])
 
@@ -152,7 +152,7 @@ def build_eval_transforms(
     Paired transform is a no-op for evaluation.
     """
     image_only = T.Compose([
-        T.ConvertImageDtype(torch.float32),
+        T.ToTensor(),
         T.Normalize(mean=mean, std=std),
     ])
 

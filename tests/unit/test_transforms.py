@@ -62,16 +62,18 @@ def test_paired_compose():
 
 
 def test_deterministic_eval_transforms():
+    from PIL import Image
+    import numpy as np
     from causalmask.data.transforms import build_eval_transforms
-    img = _make_dummy_image_tensor()
+    img = Image.fromarray((np.random.rand(64, 64, 3) * 255).astype(np.uint8))
     mask = _make_dummy_mask_tensor()
-    img_t, paired = build_eval_transforms(input_size=(64, 64))
+    img_t, paired = build_eval_transforms()
     img_out = img_t(img)
-    assert img_out.shape == img.shape
+    assert img_out.shape == (3, 64, 64)
     assert torch.isfinite(img_out).all()
     # Paired eval should be identity
-    img_p, mask_p = paired(img, mask)
-    assert torch.equal(img_p, img)
+    img_p, mask_p = paired(img_out, mask)
+    assert torch.equal(img_p, img_out)
     assert torch.equal(mask_p, mask)
 
 
@@ -95,3 +97,39 @@ def test_to_tensor_mask():
     assert t.shape == (1, 64, 64)
     assert t.dtype == torch.float32
     assert set(t.unique().tolist()).issubset({0.0, 1.0})
+
+
+def test_train_transforms_accepts_pil_image():
+    """Regression test: build_train_transforms must accept PIL Image input.
+
+    Broken by T.ConvertImageDtype which expects Tensor.
+    The fix replaces ConvertImageDtype with T.ToTensor.
+    """
+    from PIL import Image
+    import numpy as np
+    from causalmask.data.transforms import build_train_transforms
+
+    pil_img = Image.fromarray((np.random.rand(100, 100, 3) * 255).astype(np.uint8))
+    img_t, paired = build_train_transforms()
+
+    result = img_t(pil_img)
+    assert isinstance(result, torch.Tensor), "train transform must return Tensor"
+    assert result.shape == (3, 100, 100), f"expected (3,100,100) got {result.shape}"
+    assert result.dtype == torch.float32
+    assert torch.isfinite(result).all()
+
+
+def test_eval_transforms_accepts_pil_image():
+    """Regression test: build_eval_transforms must accept PIL Image input."""
+    from PIL import Image
+    import numpy as np
+    from causalmask.data.transforms import build_eval_transforms
+
+    pil_img = Image.fromarray((np.random.rand(100, 100, 3) * 255).astype(np.uint8))
+    img_t, paired = build_eval_transforms()
+
+    result = img_t(pil_img)
+    assert isinstance(result, torch.Tensor), "eval transform must return Tensor"
+    assert result.shape == (3, 100, 100), f"expected (3,100,100) got {result.shape}"
+    assert result.dtype == torch.float32
+    assert torch.isfinite(result).all()
