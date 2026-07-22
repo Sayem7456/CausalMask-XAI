@@ -1,1 +1,6 @@
-experiment_id,phase,model,backbone,fold,loss_variant,dataset,status,notes
+experiment_id,phase,model,backbone,fold,loss_variant,dataset,status,notes,run_id,date,hypothesis,experiment,seed,split_digest,state,auroc,balanced_accuracy,artifact_path
+,,efficientnet_b0,,0,,,,,baseline_ce_effb0_fold0_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold0_seed42_smoke
+,,efficientnet_b0,,1,,,,,baseline_ce_effb0_fold1_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold1_seed42_smoke
+,,efficientnet_b0,,2,,,,,baseline_ce_effb0_fold2_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold2_seed42_smoke
+,,efficientnet_b0,,3,,,,,baseline_ce_effb0_fold3_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold3_seed42_smoke
+,,efficientnet_b0,,4,,,,,baseline_ce_effb0_fold4_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold4_seed42_smoke

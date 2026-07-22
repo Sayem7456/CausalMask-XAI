@@ -1,0 +1,100 @@
+{
+  "phase": "04",
+  "name": "Baseline Pipeline Smoke Test",
+  "timestamp_utc": "2026-07-22T06:44:33.813329+00:00",
+  "project_root": "/home/eatl/CausalMask-XAI",
+  "config": {
+    "project_root": "/home/eatl/CausalMask-XAI",
+    "phase": "04",
+    "phase_name": "Baseline Pipeline Smoke Test",
+    "timestamp_utc": "2026-07-22T06:44:27.412870+00:00",
+    "seed": 42,
+    "backbone": "efficientnet_b0",
+    "pretrained": false,
+    "num_classes": 2,
+    "input_size": [
+      224,
+      224
+    ],
+    "batch_size": 8,
+    "num_epochs": 1,
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "gradient_clip_val": 1.0,
+    "amp_enabled": false,
+    "optimizer": "adamw",
+    "scheduler": "reduce_on_plateau",
+    "early_stopping_patience": 50,
+    "label_smoothing": 0.0,
+    "smoke_run": true,
+    "smoke_train_samples": 32,
+    "smoke_val_samples": 16,
+    "smoke_test_samples": 8,
+    "note": "All outputs are SMOKE. No scientific conclusions.",
+    "manifest_version": "v1",
+    "grouped_manifest_version": "v2",
+    "duplicate_version": "v1",
+    "split_name": "busi_binary_grouped_5fold_v1",
+    "binary_classification": [
+      "benign",
+      "malignant"
+    ],
+    "external_datasets": [
+      "bus_uclm"
+    ],
+    "datasets": {
+      "busi": {
+        "archive_rel": "data/raw/archives/BUSI.zip",
+        "extract_rel": "data/raw/extracted/BUSI"
+      },
+      "bus_uclm": {
+        "archive_rel": "data/raw/archives/BUS-UCLM.zip",
+        "extract_rel": "data/raw/extracted/BUS-UCLM"
+      }
+    }
+  },
+  "environment_summary": {
+    "python": "3.13.14 (main, Jul 18 2026, 17:02:37) [Clang 22.1.3 ]",
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "torch": "2.13.0+cu130",
+    "cuda_available": false
+  },
+  "smoke_run_id": "20260722-124428_smoke_effb0_fold0",
+  "run_dir": "/home/eatl/CausalMask-XAI/artifacts/runs/20260722-124428_smoke_effb0_fold0",
+  "modules_implemented": [
+    "src/causalmask/reproducibility.py",
+    "src/causalmask/data/transforms.py",
+    "src/causalmask/models/factory.py",
+    "src/causalmask/training/engine.py",
+    "src/causalmask/training/checkpointing.py",
+    "src/causalmask/evaluation/classification.py",
+    "src/causalmask/evaluation/calibration.py"
+  ],
+  "test_modules": [
+    "tests/unit/test_transforms.py",
+    "tests/unit/test_models.py",
+    "tests/unit/test_checkpointing.py",
+    "tests/unit/test_engine.py",
+    "tests/unit/test_classification.py",
+    "tests/unit/test_calibration.py"
+  ],
+  "tests_passed": true,
+  "completed_checks": [
+    "split_integrity_verified",
+    "dataset_output_shapes",
+    "image_mask_alignment",
+    "deterministic_val_transforms",
+    "model_output_shape",
+    "finite_loss",
+    "checkpoint_save",
+    "checkpoint_resume",
+    "prediction_export",
+    "classification_metrics",
+    "calibration_metrics",
+    "focused_tests"
+  ],
+  "failed_checks": [],
+  "status_label": "smoke-tested",
+  "note": "All outputs are SMOKE. No scientific conclusions. One-epoch synthetic run only. No full folds. No external evaluation.",
+  "phase_gate_passed": false
+}

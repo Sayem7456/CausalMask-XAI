@@ -50,12 +50,16 @@
 - No full cross-validation or external evaluation
 - **Status:** smoke-tested
 
-## Phase 5 — Counterfactual Generation [PLANNED]
+## Phase 5 — Baseline Five-Fold Cross-Validation [IMPLEMENTED]
 
-- Lesion-sufficient images
-- Lesion-removed images
-- Background-swapped images
-- Mask dilation ablation
+- EfficientNet-B0 baseline on five fixed BUSI folds
+- Per-fold training, validation checkpoint selection, Youden threshold from validation
+- Out-of-fold aggregate metrics (AUROC, balanced accuracy, sensitivity, specificity, F1, precision, ECE, Brier)
+- Checkpoint resume after disconnection
+- Never overwrites completed runs; records failed/interrupted runs
+- Notebook: `notebooks/05_baseline_five_fold_cross_validation.ipynb`
+- **Status:** implemented, runnable (blocked locally — requires Colab Drive with BUSI data)
+- **Gate:** structurally complete; real execution requires BUSI via Google Drive
 
 ## Phase 6 — CausalMask Score [PLANNED]
 
