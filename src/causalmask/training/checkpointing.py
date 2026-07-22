@@ -113,7 +113,7 @@ def load_checkpoint(
         raise FileNotFoundError(f"Checkpoint not found: {path}")
 
     device = device or torch.device("cpu")
-    data = torch.load(path, map_location=device, weights_only=True)
+    data = torch.load(path, map_location=device, weights_only=False)
 
     model_state = data.get("model_state", {})
     if any(k.startswith("module.") for k in model_state):
@@ -150,11 +150,35 @@ def load_checkpoint(
     return checkpoint
 
 
+def _make_numpy_state_safe(state: Any) -> tuple:
+    """Convert numpy random state to a pickle-safe format.
+
+    ``np.random.get_state()`` returns a tuple whose second element is an
+    ndarray.  PyTorch 2.6+ ``torch.load(weights_only=True)`` rejects pickle
+    globals needed to reconstruct that array.  We convert the array to bytes
+    so the state survives ``weights_only=True`` serialization.
+    """
+    return (state[0], state[1].tobytes(), state[2], state[3], state[4])
+
+
+def _restore_numpy_state(state: tuple) -> tuple:
+    """Restore a numpy random state that may be in safe format.
+
+    Handles both the original tuple-with-ndarray (for backward compatibility
+    with checkpoints saved before the safe-format conversion) and the safe
+    tuple-with-bytes format.
+    """
+    if isinstance(state[1], bytes):
+        arr = np.frombuffer(state[1], dtype=np.uint32)
+        return (state[0], arr, state[2], state[3], state[4])
+    return state
+
+
 def capture_rng_states(seed: int | None = None) -> dict[str, Any]:
     """Capture current RNG states for all relevant generators."""
     states = {
         "python_random": random.getstate(),
-        "numpy_random": np.random.get_state(),
+        "numpy_random": _make_numpy_state_safe(np.random.get_state()),
         "torch_cpu_rng": torch.get_rng_state(),
     }
     if torch.cuda.is_available():
@@ -167,7 +191,7 @@ def restore_rng_states(states: dict[str, Any]) -> None:
     if "python_random" in states:
         random.setstate(states["python_random"])
     if "numpy_random" in states:
-        np.random.set_state(states["numpy_random"])
+        np.random.set_state(_restore_numpy_state(states["numpy_random"]))
     if "torch_cpu_rng" in states:
         torch.set_rng_state(states["torch_cpu_rng"])
     if "torch_cuda_rng" in states and torch.cuda.is_available():

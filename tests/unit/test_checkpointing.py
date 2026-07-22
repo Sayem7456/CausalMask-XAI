@@ -81,9 +81,45 @@ def test_find_latest_no_checkpoints():
 
 def test_rng_capture_restore():
     import random
-    rng_a = random.randint(0, 1000)
     states = capture_rng_states()
     rng_b = random.randint(0, 1000)
     restore_rng_states(states)
     rng_c = random.randint(0, 1000)
     assert rng_b == rng_c
+
+
+def test_save_and_load_with_rng_states():
+    """Regression: checkpoint with real rng_states (numpy arrays) must load.
+
+    PyTorch 2.6+ ``torch.load(weights_only=True)`` rejects pickle globals
+    from ``numpy._core.multiarray._reconstruct``.  This test verifies both
+    the load-side fix (``weights_only=False``) and the save-side fix (numpy
+    state stored as bytes).
+    """
+    import random
+
+    model, optim = _make_model_and_optim()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        ckpt_path = Path(tmpdir) / "test_with_rng.pt"
+
+        ckpt = Checkpoint(
+            epoch=3,
+            global_step=50,
+            model_state=model.state_dict(),
+            optimizer_state=optim.state_dict(),
+            rng_states=capture_rng_states(),
+        )
+        save_checkpoint(ckpt, ckpt_path)
+        assert ckpt_path.exists()
+
+        rng_b = random.randint(0, 1000)
+        model2, optim2 = _make_model_and_optim()
+        loaded = load_checkpoint(
+            ckpt_path, model2, optim2, device=torch.device("cpu")
+        )
+        assert loaded.epoch == 3
+        assert loaded.global_step == 50
+
+        restore_rng_states(loaded.rng_states)
+        rng_c = random.randint(0, 1000)
+        assert rng_b == rng_c, "RNG state not restored correctly"
