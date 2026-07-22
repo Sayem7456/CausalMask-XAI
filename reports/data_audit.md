@@ -1,65 +1,41 @@
 # Data Audit Report — Phase 2
 
-**Generated:** 2026-07-21T06:13:47.461182+00:00
-**Project root:** `/content/CausalMask-XAI`
+**Generated:** 2026-07-22T07:06:01.724932+00:00
+**Project root:** `/home/eatl/CausalMask-XAI`
 
 ---
 
 ## Dataset Detection Status
 
-- **busi:** extracted
-  - Path: `/content/CausalMask-XAI/data/raw/extracted/busi`
-- **bus_uclm:** extracted
-  - Path: `/content/CausalMask-XAI/data/raw/extracted/bus_uclm`
+- **busi:** missing
+- **bus_uclm:** missing
 
 ---
 
 ## Discovered Samples
 
-### BUSI
-
-- Total image samples: 780
-  - benign: 437
-  - malignant: 210
-  - normal: 133
-
-### BUS-UCLM
-
-- Total image samples: 593
-  - benign: 174
-  - normal: 419
-
 ---
 
 ## Manifest Summary
 
-- **BUSI records:** 780
-- **BUS-UCLM records:** 593
-- **Total records:** 1373
-- **Primary task samples:** 821
-- **Excluded normal:** 552
+- **BUSI records:** 0
+- **BUS-UCLM records:** 0
+- **Total records:** 0
+- **Primary task samples:** N/A
+- **Excluded normal:** N/A
 
 ### Validation Results
 
-- duplicate_sample_ids: 0
-- duplicate_image_paths: 0
-- labels_not_recognized: 0
-- missing_masks_for_primary: 0
+- (no validation run)
 
 ### Integrity Checks
 
-- [PASS] all_images_readable
-- [PASS] primary_abnormal_have_masks
-- [PASS] paths_are_unique
-- [PASS] labels_recognized
-- [PASS] raw_checksums_unchanged
+- (no integrity checks run)
 
 ---
 
 ## Quality Flags
 
-- **BUSI flag distribution:** {'empty_mask': 133, 'very_small_mask': 66}
-- **BUS-UCLM flag distribution:** {'empty_mask': 593}
 
 ---
 
@@ -90,4 +66,4 @@
 
 ## Phase Gate Status
 
-**Phase 2 gate: PASSED**
+**Phase 2 gate: INCOMPLETE — see checks above**
