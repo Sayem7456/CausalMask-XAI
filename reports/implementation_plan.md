@@ -61,13 +61,41 @@
 - **Status:** implemented, runnable (blocked locally — requires Colab Drive with BUSI data)
 - **Gate:** structurally complete; real execution requires BUSI via Google Drive
 
-## Phase 6 — CausalMask Score [PLANNED]
+## Phase 6 — Counterfactual Engine and Quality Audit [IMPLEMENTED]
+
+- **Lesion-plus-margin masks** at 0%, 5%, 10%, 20% relative to bounding-box scale
+- **Lesion-sufficient images** — lesion+margin preserved, Gaussian-blurred exterior
+- **Lesion-removed images** — OpenCV Telea and Navier-Stokes inpainting (described as interventions)
+- **Background swaps** — partition-isolated donors, same/opposite class, no self-donation
+- **Sham controls** — random-region removal, random-region preservation, shifted-mask
+- **Quality metrics** — changed-pixel fraction, preservation error, boundary gradient, SSIM, histogram divergence, failure rate
+- **Deterministic caching** — keyed by sample ID, manifest digest, split digest, operator, margin, donor ID, seed, config digest
+- **Visual audit grids** — stratified by class, lesion size, margin, operator, quality flags
+- **57 unit tests** pass
+- All outputs saved under versioned artifact directories
+- No causal model training or performance claims
+- Notebook: `notebooks/06_counterfactual_engine_and_quality_audit.ipynb`
+- **Status:** implemented, runnable (blocked locally — requires Colab Drive with BUSI data)
+- **Gate:** structurally complete; real execution requires BUSI via Google Drive
+
+### Module summary
+- `src/causalmask/counterfactuals/__init__.py`
+- `src/causalmask/counterfactuals/masks.py`
+- `src/causalmask/counterfactuals/sufficient.py`
+- `src/causalmask/counterfactuals/removal.py`
+- `src/causalmask/counterfactuals/background_swap.py`
+- `src/causalmask/counterfactuals/controls.py`
+- `src/causalmask/counterfactuals/quality.py`
+
+## Phase 7 — CausalMask Score and XAI Evaluation [PLANNED]
 
 - Necessity, sufficiency, invariance, localization
-- Harmonic mean combination
+- Grad-CAM++, Integrated Gradients, RISE
+- Harmonic mean CausalMask score
+- Bootstrap confidence intervals
 - Score analysis and visualization
 
-## Phase 7 — Causal Regularization [PLANNED]
+## Phase 8 — Causal Regularization [PLANNED]
 
 - Training with combined loss
 - Hyperparameter selection
