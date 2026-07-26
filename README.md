@@ -13,15 +13,22 @@ This project implements a **causal auditing and training framework** for breast-
 | 2 | Manifest and quality audit | Done |
 | 3 | Duplicate audit and fixed group-disjoint 5-fold splits | Done |
 | 4 | Baseline pipeline smoke test | Passed |
-| **5** | **Baseline EfficientNet-B0 five-fold CV** | **Done — validated** |
-| 6–12 | Causal counterfactuals, CausalMask metrics, regularization, XAI methods, ablations | Planned |
+| 5 | Baseline EfficientNet-B0 five-fold CV | Done — validated |
+| **6** | **Counterfactual engine and quality audit** | **Executed — validated** |
+| 7–12 | CausalMask metrics, regularization, XAI methods, ablations | Planned |
 
-### Phase 5 results
+### Phase 6 results (executed 2026-07-26 on Colab T4)
 
-- EfficientNet-B0, 5-fold cross-validation on BUSI (benign vs malignant)
-- Threshold selection from validation predictions (Youden's J)
-- Hold-out test evaluation per fold
-- All 5 folds completed and validated
+- **647 BUSI primary-task samples** processed (benign + malignant)
+- **14,572 quality metric records** across all margins × operators
+- **4 margin ratios** (0%, 5%, 10%, 20%) relative to lesion bbox scale
+- **3 intervention types**: lesion-sufficient, lesion-removed (Telea + Navier-Stokes), background-swapped (same + opposite class)
+- **3 sham controls**: random-region removal, random-region preservation, shifted-mask
+- **27 visual audit grids** stratified by operator and margin
+- **103 failed samples** explicitly recorded with reasons
+- **Donor isolation verified**: no cross-partition or self-donation
+- BUS-UCLM never loaded or consulted
+- 57 counterfactual unit tests pass (163 total)
 - Phase gate: passed
 
 ## Datasets
@@ -39,6 +46,13 @@ src/causalmask/
     transforms.py        — Paired image-mask transforms (train/eval)
     splits.py            — Split loading, digest computation, reproducibility
     duplicate_audit.py   — Exact and near-duplicate detection (SHA-256, pHash, SSIM)
+  counterfactuals/
+    masks.py             — Lesion-plus-margin masks (0%, 5%, 10%, 20%)
+    sufficient.py        — Lesion-sufficient images (Gaussian-blurred exterior)
+    removal.py           — Lesion-removed images (Telea, Navier-Stokes inpainting)
+    background_swap.py   — Background-swapped images (partition-isolated donors)
+    controls.py          — Sham controls (random region, shifted mask)
+    quality.py           — Quality metrics, caching, Parquet export, audit grids
   models/
     factory.py           — Model creation (EfficientNet-B0, ResNet-18)
   training/
@@ -55,8 +69,9 @@ notebooks/
   03_duplicate_audit_and_fixed_splits.ipynb
   04_baseline_pipeline_smoke_test.ipynb
   05_baseline_five_fold_cross_validation.ipynb
+  06_counterfactual_engine_and_quality_audit.ipynb
 tests/
-  unit/                  — 97 unit tests
+  unit/                  — 163 unit tests (57 counterfactual)
 ```
 
 ## Key design decisions
@@ -65,7 +80,7 @@ tests/
 - **No external data leakage**: BUS-UCLM is never loaded during development or validation. It is frozen for Phase 12 external validation.
 - **Deterministic run IDs**: `make_fold_run_id` uses (fold, seed) — no timestamps — so checkpoint resume works across Colab disconnections.
 - **Google Drive sync**: All artifacts (runs, reports, manifests, splits) sync to Drive for persistence across Colab sessions.
-- **All tests pass**: 97 unit tests pass (5 pre-existing failures require torchvision GPU deps not available on dev machines).
+- **All tests pass**: 163 unit tests pass (57 counterfactual, 106 data/models/training/evaluation).
 
 ## Setup
 
@@ -87,9 +102,8 @@ pytest tests/
 
 | Phase | Milestone |
 |-------|-----------|
-| 6 | Grad-CAM, Grad-CAM++, Integrated Gradients, RISE |
-| 7 | Lesion counterfactual generators (sufficient, removed, swap) |
-| 8 | CausalMask Score (necessity, sufficiency, background invariance, localization) |
+| 7 | CausalMask Score (necessity, sufficiency, background invariance, localization) |
+| 8 | XAI methods — Grad-CAM, Grad-CAM++, Integrated Gradients, RISE |
 | 9 | Causal regularization training |
 | 10 | BUS-UCLM external validation |
 | 11 | Ablations, bootstrap CIs, statistical tests |
