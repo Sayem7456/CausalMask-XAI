@@ -459,7 +459,7 @@ def save_quality_metrics(
     # Serialize dict/list/tuple columns that PyArrow cannot infer from empty values
     for col in ["metadata", "output_range", "output_shape"]:
         if col in df.columns:
-            df[col] = df[col].apply(json.dumps)
+            df[col] = df[col].apply(lambda v: json.dumps(v, default=str) if v is not None else None)
     df.to_parquet(path)
     logger.info(f"Saved {len(df)} quality records to {path}")
     return df
