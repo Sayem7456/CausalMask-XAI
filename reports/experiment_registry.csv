@@ -5,3 +5,4 @@ experiment_id,phase,model,backbone,fold,loss_variant,dataset,status,notes,run_id
 ,,efficientnet_b0,,3,,,,,baseline_ce_effb0_fold3_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold3_seed42_smoke
 ,,efficientnet_b0,,4,,,,,baseline_ce_effb0_fold4_seed42_smoke,2026-07-22,Baseline cross-entropy,five_fold_cv,42.0,smoke,smoke_completed,,,/home/eatl/CausalMask-XAI/artifacts/runs/baseline_ce_effb0_fold4_seed42_smoke
 phase6_counterfactual_engine_20260726,,,,,,,counterfactuals,,,2026-07-26,Counterfactual engine and quality audit,phase_06_implementation,42.0,not_applicable,implemented,,,,
+phase7_causalmask_metrics_baseline_20260727,,,,,,,causalmask_metrics,,,2026-07-27,CausalMask metrics on baseline,phase_07_implementation,42.0,not_applicable,implemented,,,,

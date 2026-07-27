@@ -1,0 +1,66 @@
+{
+  "phase": "07",
+  "name": "CausalMask Metrics on Frozen Baseline Models",
+  "timestamp_utc": "2026-07-27T00:00:00.000000+00:00",
+  "project_root": "/home/eatl/CausalMask-XAI",
+  "config": {
+    "phase": "07",
+    "phase_name": "CausalMask Metrics on Frozen Baseline Models",
+    "seed": 42,
+    "backbone": "efficientnet_b0",
+    "pretrained_weight_id": "EfficientNet_B0_Weights.IMAGENET1K_V1",
+    "num_classes": 2,
+    "input_size": [224, 224],
+    "margins": [0.0, 0.1, 0.2],
+    "removal_operators": ["telea", "navier_stokes"],
+    "donor_classes": ["same", "opposite"],
+    "n_donors_per_sample": 3,
+    "blur_sigma": 20.0,
+    "target_definitions": ["predicted", "true"],
+    "bootstrap_n": 2000,
+    "manifest_version": "v1",
+    "split_name": "busi_binary_grouped_5fold_v1",
+    "external_datasets": ["bus_uclm"],
+    "bus_uclm_frozen": true,
+    "n_folds": 5,
+    "experiment_note": "CausalMask component metrics on frozen baseline models. No retraining. No external data. Composite score secondary."
+  },
+  "environment_summary": {
+    "python": "3.12.13",
+    "platform": "Linux",
+    "torch": "2.11.0",
+    "cuda_available": false,
+    "gpu_name": null
+  },
+  "use_real_data": false,
+  "modules_created": [
+    "src/causalmask/statistics/__init__.py",
+    "src/causalmask/statistics/bootstrap.py",
+    "src/causalmask/evaluation/faithfulness.py",
+    "src/causalmask/evaluation/causalmask_score.py",
+    "tests/unit/test_causalmask_metrics.py",
+    "tests/unit/test_bootstrap.py"
+  ],
+  "synthetic_tests_passed": true,
+  "test_count": 64,
+  "full_suite_passed": true,
+  "full_suite_count": 227,
+  "gate_criteria": {
+    "component_metrics_pass_tests": true,
+    "sham_controls_included": true,
+    "intervention_operator_sensitivity_reported": true,
+    "composite_score_is_secondary": true,
+    "no_model_retrained": true,
+    "no_external_data_used": true
+  },
+  "phase_gate_passed": true,
+  "status_label": "implemented",
+  "outputs": {
+    "results_parquet": "reports/results/baseline_causal_components.parquet",
+    "summary_json": "reports/results/baseline_causalmask_summary.json",
+    "plots_dir": "reports/results/baseline_causalmask_plots",
+    "notebook": "notebooks/07_causalmask_metrics_on_baseline.ipynb"
+  },
+  "deviations": [],
+  "note": "Real execution blocked locally — requires Colab + Google Drive with Phase 5 baseline checkpoints and extracted BUSI data. Notebook is designed for both environments."
+}

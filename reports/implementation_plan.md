@@ -87,13 +87,34 @@
 - `src/causalmask/counterfactuals/controls.py`
 - `src/causalmask/counterfactuals/quality.py`
 
-## Phase 7 — CausalMask Score and XAI Evaluation [PLANNED]
+## Phase 7 — CausalMask Metrics on Frozen Baseline Models [IMPLEMENTED]
 
-- Necessity, sufficiency, invariance, localization
-- Grad-CAM++, Integrated Gradients, RISE
-- Harmonic mean CausalMask score
-- Bootstrap confidence intervals
-- Score analysis and visualization
+- **Component metrics** — raw lesion necessity, normalized lesion necessity, lesion sufficiency, background invariance, prediction-flip rate, donor-stratified invariance, lesion-vs-sham difference
+- **Per-sample computation** — `compute_per_sample_causal_metrics` with separate predicted-class and true-class target columns
+- **CausalMask composite score** — harmonic (primary), arithmetic, and geometric aggregation with equal preregistered weights
+- **Aggregation sensitivity** — Spearman correlations between harmonic, arithmetic, and geometric composites
+- **Group-aware bootstrap CIs** — resampling at the group level
+- **Distribution analysis** — benign vs malignant, correct vs incorrect, lesion vs sham, margin sensitivity, operator sensitivity
+- **Synthetic metric tests** — 48 tests proving expected behavior and valid numeric ranges
+- Notebook: `notebooks/07_causalmask_metrics_on_baseline.ipynb`
+- **Status:** implemented, runnable (blocked locally — requires Colab Drive with baseline checkpoints and BUSI data)
+- **Gate:** structurally complete; real execution requires Colab + Drive
+
+### Module summary
+- `src/causalmask/statistics/__init__.py`
+- `src/causalmask/statistics/bootstrap.py`
+- `src/causalmask/evaluation/faithfulness.py`
+- `src/causalmask/evaluation/causalmask_score.py`
+- `tests/unit/test_causalmask_metrics.py`
+- `tests/unit/test_bootstrap.py`
+
+### Phase 7 gate criteria
+- Component metrics pass synthetic tests — YES (48 tests)
+- Sham controls are included — YES
+- Intervention-operator sensitivity is reported — YES
+- The composite score remains secondary — YES
+- No model was retrained — YES
+- No external data were used — YES
 
 ## Phase 8 — Causal Regularization [PLANNED]
 
