@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor, nn
@@ -172,10 +173,12 @@ class CausalTrainer(Trainer):
         total_eligible = 0.0
         num_batches = 0
 
-        # Accumulate for monitoring
+        # Accumulate for monitoring + AUROC
         suff_divergences: list[float] = []
         swap_divergences: list[float] = []
         removed_confidences: list[float] = []
+        all_val_logits: list[Tensor] = []
+        all_val_labels: list[Tensor] = []
 
         for batch in dataloader:
             images = batch["image"].to(self.device)
@@ -237,6 +240,9 @@ class CausalTrainer(Trainer):
             total_samples += images.size(0)
             num_batches += 1
 
+            all_val_logits.append(original_logits.detach().cpu())
+            all_val_labels.append(labels.detach().cpu())
+
         n = max(num_batches, 1)
 
         metrics = {
@@ -255,6 +261,24 @@ class CausalTrainer(Trainer):
             metrics["swap_divergence"] = sum(swap_divergences) / len(swap_divergences)
         if removed_confidences:
             metrics["removed_confidence"] = sum(removed_confidences) / len(removed_confidences)
+
+        if all_val_logits:
+            val_logits_cat = torch.cat(all_val_logits, dim=0)
+            val_labels_cat = torch.cat(all_val_labels, dim=0).to(val_logits_cat.device)
+            val_probs = torch.softmax(val_logits_cat, dim=1)
+            try:
+                from sklearn.metrics import roc_auc_score, balanced_accuracy_score
+                val_labels_np = val_labels_cat.numpy()
+                val_probs_pos = val_probs[:, 1].numpy()
+                if len(np.unique(val_labels_np)) > 1:
+                    metrics["val_auroc"] = float(roc_auc_score(val_labels_np, val_probs_pos))
+                else:
+                    metrics["val_auroc"] = float("nan")
+                val_preds_np = (val_probs_pos >= 0.5).astype(np.int64)
+                metrics["val_balanced_accuracy"] = float(balanced_accuracy_score(val_labels_np, val_preds_np))
+            except Exception:
+                metrics["val_auroc"] = float("nan")
+                metrics["val_balanced_accuracy"] = float("nan")
 
         return metrics
 
@@ -325,6 +349,8 @@ class CausalTrainer(Trainer):
                 "train_accuracy": train_metrics["accuracy"],
                 "val_loss": val_metrics["loss"],
                 "val_accuracy": val_metrics["accuracy"],
+                "val_auroc": val_metrics.get("val_auroc", float("nan")),
+                "val_balanced_accuracy": val_metrics.get("val_balanced_accuracy", float("nan")),
                 "val_suff_div": val_metrics.get("suff_divergence", 0.0),
                 "val_swap_div": val_metrics.get("swap_divergence", 0.0),
                 "val_removed_conf": val_metrics.get("removed_confidence", 0.0),
