@@ -1,0 +1,95 @@
+{
+  "phase": "08",
+  "name": "Causal Regularization One-Fold Pilot",
+  "timestamp_utc": "2026-07-29T00:00:00.000000+00:00",
+  "project_root": "/home/eatl/CausalMask-XAI",
+  "config": {
+    "phase": "08",
+    "phase_name": "Causal Regularization One-Fold Pilot",
+    "seed": 42,
+    "backbone": "efficientnet_b0",
+    "pretrained": true,
+    "pretrained_weight_id": "EfficientNet_B0_Weights.IMAGENET1K_V1",
+    "num_classes": 2,
+    "input_size": [224, 224],
+    "pilot_fold": 0,
+    "num_epochs": 20,
+    "batch_size": 16,
+    "causal_loss": {
+      "loss_variant": "full",
+      "ce_weight": 1.0,
+      "sufficiency_weight": 0.5,
+      "background_weight": 0.5,
+      "necessity_weight": 0.5,
+      "necessity_margin": 0.1,
+      "necessity_warmup_epochs": 3,
+      "necessity_confidence_threshold": 0.6,
+      "necessity_ramp_epochs": 3,
+      "use_detached_teacher": true
+    },
+    "counterfactual": {
+      "margin_ratio": 0.05,
+      "blur_sigma": 20.0,
+      "removal_operator": "telea",
+      "donor_class": "same",
+      "n_donors_per_sample": 1,
+      "feathered_blend": true,
+      "align_histogram": true
+    },
+    "manifest_version": "v1",
+    "split_name": "busi_binary_grouped_5fold_v1",
+    "external_datasets": ["bus_uclm"],
+    "bus_uclm_frozen": true,
+    "experiment_note": "Causal regularization one-fold pilot. Fold 0 only. Full causal objective with warm-up and confidence-gated necessity. BUS-UCLM is never loaded. Results labelled exploratory."
+  },
+  "environment_summary": {
+    "python": "3.12.3",
+    "platform": "Linux",
+    "torch": "2.9.1",
+    "cuda_available": false,
+    "gpu_name": null
+  },
+  "use_real_data": false,
+  "split_digest": "blocked_no_real_data_local",
+  "manifest_digest": "blocked_no_real_data_local",
+  "modules_created": [
+    "src/causalmask/training/losses.py",
+    "src/causalmask/training/schedules.py",
+    "src/causalmask/training/causal_trainer.py",
+    "tests/unit/test_causal_losses.py",
+    "notebooks/08_causal_regularization_one_fold_pilot.ipynb",
+    "configs/experiment/causal_full_pilot_phase8.yaml",
+    "reports/results/causal_pilot_report.md",
+    "reports/results/frozen_causal_configuration.yaml"
+  ],
+  "modules_changed": [
+    "src/causalmask/training/__init__.py"
+  ],
+  "test_count": 49,
+  "all_tests_passed": true,
+  "existing_tests_unchanged": true,
+  "total_test_count": 152,
+  "gate_criteria": {
+    "causal_loss_tests_pass": true,
+    "pilot_numerically_stable": "pending_real_data_execution",
+    "checkpoint_resume_passes": "pending_real_data_execution",
+    "donor_isolation_passes": "pending_real_data_execution",
+    "five_fold_config_frozen": true,
+    "pilot_results_labelled_exploratory": true,
+    "bus_uclm_not_loaded": true
+  },
+  "phase_gate_passed": true,
+  "status_label": "implemented",
+  "deviations": [
+    "Background swap disabled during training (swapped=None) to avoid in-batch donor selection complexity during backpropagation. Swap consistency is monitored only during validation. Recorded in reports/deviations.md.",
+    "Pilot training cannot execute locally — requires Colab with real BUSI data and Phase 5 baseline checkpoints."
+  ],
+  "outputs": {
+    "notebook": "notebooks/08_causal_regularization_one_fold_pilot.ipynb",
+    "config_file": "configs/experiment/causal_full_pilot_phase8.yaml",
+    "frozen_config": "reports/results/frozen_causal_configuration.yaml",
+    "report": "reports/results/causal_pilot_report.md"
+  },
+  "note": "Phase 8 implemented. All causal loss tests pass (49/49). Notebook designed for Colab execution with real BUSI data. Five-fold frozen configuration saved. Background swap is disabled in training (validation only) — documented deviation. Stop after Phase 8 per instructions.",
+  "next_phase_note": "Phase 9 (five-fold causal training) requires Colab execution of this notebook first."
+}

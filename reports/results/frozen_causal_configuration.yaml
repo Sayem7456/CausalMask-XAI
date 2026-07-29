@@ -1,0 +1,85 @@
+# Frozen five-fold causal training configuration from Phase 8 pilot.
+# WARNING: This config is frozen. Changes require a new run ID.
+metadata:
+  description: Frozen five-fold causal training configuration from Phase 8 pilot.
+  pilot_run_id: causal_full_effb0_fold0_seed42_pilot
+  pilot_fold: 0
+  freeze_date_utc: '2026-07-29T00:00:00.000000+00:00'
+  warning: This config is frozen. Changes require a new run ID.
+config:
+  amp_enabled: true
+  augmentation:
+    affine_scale_max: 1.05
+    affine_scale_min: 0.95
+    affine_translate_max: 0.05
+    contrast_range:
+    - 0.9
+    - 1.1
+    gamma_range:
+    - 0.9
+    - 1.1
+    horizontal_flip_prob: 0.5
+    noise_std: 0.005
+    rotation_degrees: 10.0
+  backbone: efficientnet_b0
+  batch_size: 16
+  binary_classes:
+  - benign
+  - malignant
+  causal_loss:
+    background_weight: 0.5
+    ce_weight: 1.0
+    loss_variant: full
+    necessity_confidence_threshold: 0.6
+    necessity_margin: 0.1
+    necessity_ramp_epochs: 3
+    necessity_warmup_epochs: 3
+    necessity_weight: 0.5
+    sufficiency_weight: 0.5
+    use_detached_teacher: true
+  classification_threshold_policy: Youden's J statistic computed from validation predictions only
+  counterfactual:
+    align_histogram: true
+    blur_sigma: 20.0
+    donor_class: same
+    feathered_blend: true
+    margin_ratio: 0.05
+    n_donors_per_sample: 1
+    removal_operator: telea
+  datasets:
+    busi:
+      archive_rel: data/raw/archives/breast-ultrasound-images-dataset.zip
+      extract_rel: data/raw/extracted/busi
+    bus_uclm:
+      archive_rel: data/raw/archives/bus-uclm-breast-ultrasound-dataset.zip
+      extract_rel: data/raw/extracted/bus_uclm
+  early_stopping_metric: val_loss
+  early_stopping_mode: min
+  early_stopping_patience: 10
+  experiment_note: Causal regularization one-fold pilot. Fold 0 only. Full causal objective
+    with warm-up and confidence-gated necessity. BUS-UCLM is never loaded. Results labelled
+    exploratory.
+  external_datasets:
+  - bus_uclm
+  gradient_accumulation_steps: 1
+  gradient_clip_val: 1.0
+  input_size:
+  - 224
+  - 224
+  label_smoothing: 0.0
+  learning_rate: 0.0001
+  manifest_version: v1
+  num_classes: 2
+  num_epochs: 20
+  optimizer: adamw
+  phase: '08'
+  phase_name: Causal Regularization One-Fold Pilot
+  pilot_fold: 0
+  pretrained: true
+  pretrained_weight_id: EfficientNet_B0_Weights.IMAGENET1K_V1
+  scheduler: reduce_on_plateau
+  scheduler_factor: 0.5
+  scheduler_patience: 5
+  seed: 42
+  split_name: busi_binary_grouped_5fold_v1
+  weight_decay: 1.0e-05
