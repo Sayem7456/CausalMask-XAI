@@ -92,11 +92,12 @@ class BreastUltrasoundDataset(Dataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        if mask is not None and self.mask_transform is not None:
-            mask = self.mask_transform(mask)
-        elif mask is not None:
-            # Default: convert to tensor and normalize
+        if mask is not None:
+            # Convert mask to binary float tensor [1, H, W] before transforms
             mask = torch.from_numpy(np.array(mask)).float().unsqueeze(0) / 255.0
+            mask = (mask > 0.5).float()
+            if self.mask_transform is not None:
+                mask = self.mask_transform(mask)
 
         # Convert image to tensor if not already
         if not isinstance(image, torch.Tensor):
