@@ -2,7 +2,8 @@
 
 Computes lesion necessity (raw and normalized), lesion sufficiency,
 background invariance, prediction-flip rate, donor-stratified invariance,
-and lesion-intervention versus sham-control difference.
+lesion-intervention versus sham-control difference, and
+insertion/deletion AUC for XAI faithfulness.
 
 All functions accept predicted-class or true-class target definitions.
 The caller is responsible for sending the correct confidence values.
@@ -14,10 +15,17 @@ import logging
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
 _EPS = 1e-8
+
+
+def _auc_trapezoid(y: np.ndarray, dx: float = 1.0) -> float:
+    """Trapezoidal AUC of y sampled at uniform intervals dx."""
+    y = np.asarray(y, dtype=np.float64)
+    return float((y[1:] + y[:-1]).sum() * dx / 2.0)
 
 
 def _clip01(value: float) -> float:
@@ -279,3 +287,240 @@ def compute_per_sample_causal_metrics(
         result["true_opposite_class_invariance"] = float("nan")
 
     return result
+
+
+def insertion_auc(
+    model: Any,
+    image: NDArray[np.float64],
+    attribution: NDArray[np.float64],
+    mask: NDArray[np.float64],
+    target_class: int,
+    baseline: NDArray[np.float64],
+    n_steps: int = 30,
+    device: Any = None,
+) -> dict[str, Any]:
+    """Insertion AUC: add most-important pixels and measure confidence rise.
+
+    Starting from a baseline image (e.g. blurred), incrementally insert
+    pixels in order of decreasing attribution. A faithful explanation
+    should produce a steep increase in the target-class confidence.
+
+    Args:
+        model: PyTorch model (callable).
+        image: Original image [C, H, W] as numpy array.
+        attribution: Non-negative normalized [H, W] attribution.
+        mask: Binary [H, W] lesion-plus-margin mask for region-of-interest.
+            If None, uses the full image. (Not used in standard insertion,
+            kept for compatibility.)
+        target_class: Target class index for confidence tracking.
+        baseline: Baseline image [C, H, W] (e.g. blurred or zero).
+        n_steps: Number of insertion steps.
+        device: torch device.
+
+    Returns:
+        Dict with insertion_auc, curve, n_steps.
+    """
+    import torch
+
+    if device is None:
+        device = torch.device("cpu")
+
+    attr = np.asarray(attribution, dtype=np.float64)
+    img = np.asarray(image, dtype=np.float64)
+    baseline = np.asarray(baseline, dtype=np.float64)
+
+    h, w = attr.shape
+
+    sorted_indices = np.dstack(np.unravel_index(
+        np.argsort(attr.ravel())[::-1], (h, w)
+    ))[0]
+
+    total_pixels = len(sorted_indices)
+    step_size = max(1, total_pixels // n_steps)
+    n_steps_actual = min(n_steps, total_pixels // step_size)
+
+    curve = np.zeros(n_steps_actual + 1)
+    current = baseline.copy()
+
+    current_t = torch.from_numpy(current).float().unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        logits = model(current_t)
+        probs = torch.softmax(logits, dim=1)
+        curve[0] = float(probs[0, target_class].cpu().numpy())
+
+    for step in range(1, n_steps_actual + 1):
+        start_idx = (step - 1) * step_size
+        end_idx = min(step * step_size, total_pixels)
+        for idx in range(start_idx, end_idx):
+            y, x_coord = sorted_indices[idx]
+            current[:, y, x_coord] = img[:, y, x_coord]
+
+        current_t = torch.from_numpy(current).float().unsqueeze(0).to(device)
+        with torch.no_grad():
+            logits = model(current_t)
+            probs = torch.softmax(logits, dim=1)
+            curve[step] = float(probs[0, target_class].cpu().numpy())
+
+    auc_val = float(_auc_trapezoid(curve, dx=1.0 / n_steps_actual))
+
+    return {
+        "insertion_auc": auc_val,
+        "curve": curve.tolist(),
+        "n_steps": n_steps_actual,
+    }
+
+
+def deletion_auc(
+    model: Any,
+    image: NDArray[np.float64],
+    attribution: NDArray[np.float64],
+    mask: NDArray[np.float64],
+    target_class: int,
+    baseline: NDArray[np.float64],
+    n_steps: int = 30,
+    device: Any = None,
+) -> dict[str, Any]:
+    """Deletion AUC: remove most-important pixels and measure confidence drop.
+
+    Starting from the original image, incrementally replace pixels with
+    a baseline (e.g. zero or blurred) in order of decreasing attribution.
+    A faithful explanation should produce a steep decrease.
+
+    Args:
+        model: PyTorch model (callable).
+        image: Original image [C, H, W] as numpy array.
+        attribution: Non-negative normalized [H, W] attribution.
+        mask: Binary [H, W] lesion-plus-margin mask (for ROI).
+        target_class: Target class index.
+        baseline: Baseline value or array to replace removed pixels.
+        n_steps: Number of deletion steps.
+        device: torch device.
+
+    Returns:
+        Dict with deletion_auc, curve, n_steps.
+    """
+    import torch
+
+    if device is None:
+        device = torch.device("cpu")
+
+    attr = np.asarray(attribution, dtype=np.float64)
+    img = np.asarray(image, dtype=np.float64)
+    baseline = np.asarray(baseline, dtype=np.float64)
+
+    h, w = attr.shape
+
+    sorted_indices = np.dstack(np.unravel_index(
+        np.argsort(attr.ravel())[::-1], (h, w)
+    ))[0]
+
+    total_pixels = len(sorted_indices)
+    step_size = max(1, total_pixels // n_steps)
+    n_steps_actual = min(n_steps, total_pixels // step_size)
+
+    curve = np.zeros(n_steps_actual + 1)
+    current = img.copy()
+
+    current_t = torch.from_numpy(current).float().unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        logits = model(current_t)
+        probs = torch.softmax(logits, dim=1)
+        curve[0] = float(probs[0, target_class].cpu().numpy())
+
+    for step in range(1, n_steps_actual + 1):
+        start_idx = (step - 1) * step_size
+        end_idx = min(step * step_size, total_pixels)
+        for idx in range(start_idx, end_idx):
+            y, x_coord = sorted_indices[idx]
+            current[:, y, x_coord] = baseline[:, y, x_coord]
+
+        current_t = torch.from_numpy(current).float().unsqueeze(0).to(device)
+        with torch.no_grad():
+            logits = model(current_t)
+            probs = torch.softmax(logits, dim=1)
+            curve[step] = float(probs[0, target_class].cpu().numpy())
+
+    auc_val = float(_auc_trapezoid(curve, dx=1.0 / n_steps_actual))
+
+    return {
+        "deletion_auc": auc_val,
+        "curve": curve.tolist(),
+        "n_steps": n_steps_actual,
+    }
+
+
+def compute_faithfulness_insertion_deletion(
+    model: Any,
+    images: NDArray[np.float64],
+    attributions: NDArray[np.float64],
+    lesion_masks: NDArray[np.float64],
+    baseline_images: NDArray[np.float64],
+    target_classes: list[int],
+    n_steps: int = 30,
+    device: Any = None,
+) -> dict[str, Any]:
+    """Batch insertion/deletion AUC computation.
+
+    Args:
+        model: PyTorch model.
+        images: [N, C, H, W] original images.
+        attributions: [N, H, W] normalized attribution maps.
+        lesion_masks: [N, H, W] binary lesion-plus-margin masks.
+        baseline_images: [N, C, H, W] baseline images (e.g. blurred).
+        target_classes: List of target class indices per sample.
+        n_steps: Number of perturbation steps.
+        device: torch device.
+
+    Returns:
+        Dict with per-sample and aggregate insertion/deletion AUCs.
+    """
+    n = len(images)
+    insertion_vals = []
+    deletion_vals = []
+    failures = []
+
+    for i in range(n):
+        try:
+            ins = insertion_auc(
+                model, images[i], attributions[i], lesion_masks[i],
+                target_classes[i], baseline_images[i],
+                n_steps=n_steps, device=device,
+            )
+            insertion_vals.append(ins["insertion_auc"])
+        except Exception as e:
+            insertion_vals.append(float("nan"))
+            failures.append({"sample": i, "metric": "insertion", "error": str(e)})
+
+        try:
+            dell = deletion_auc(
+                model, images[i], attributions[i], lesion_masks[i],
+                target_classes[i], baseline_images[i],
+                n_steps=n_steps, device=device,
+            )
+            deletion_vals.append(dell["deletion_auc"])
+        except Exception as e:
+            deletion_vals.append(float("nan"))
+            failures.append({"sample": i, "metric": "deletion", "error": str(e)})
+
+    ins_arr = np.array(insertion_vals, dtype=np.float64)
+    del_arr = np.array(deletion_vals, dtype=np.float64)
+
+    valid = np.isfinite(ins_arr) & np.isfinite(del_arr)
+
+    return {
+        "n_samples": n,
+        "n_valid": int(valid.sum()),
+        "n_failed": len(failures),
+        "failures": failures,
+        "n_steps": n_steps,
+        "insertion_auc_mean": float(np.nanmean(ins_arr)),
+        "insertion_auc_median": float(np.nanmedian(ins_arr)),
+        "insertion_auc_std": float(np.nanstd(ins_arr)),
+        "deletion_auc_mean": float(np.nanmean(del_arr)),
+        "deletion_auc_median": float(np.nanmedian(del_arr)),
+        "deletion_auc_std": float(np.nanstd(del_arr)),
+        "insertion_auc": ins_arr.tolist(),
+        "deletion_auc": del_arr.tolist(),
+    }

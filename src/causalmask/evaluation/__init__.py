@@ -1,4 +1,4 @@
-"""Evaluation subpackage — classification, calibration, faithfulness, CausalMask score."""
+"""Evaluation subpackage — classification, calibration, faithfulness, CausalMask score, localization."""
 
 from causalmask.evaluation.classification import (
     compute_classification_metrics,
@@ -23,6 +23,9 @@ from causalmask.evaluation.faithfulness import (
     lesion_vs_sham_difference,
     ensure_confidence_for_target,
     compute_per_sample_causal_metrics,
+    insertion_auc,
+    deletion_auc,
+    compute_faithfulness_insertion_deletion,
 )
 from causalmask.evaluation.causalmask_score import (
     harmonic_mean,
@@ -33,4 +36,16 @@ from causalmask.evaluation.causalmask_score import (
     compute_causalmask_geometric,
     compute_all_aggregations,
     compute_aggregation_sensitivity,
+)
+from causalmask.evaluation.localization import (
+    attribution_mass_inside_mask,
+    attribution_mass_inside_lesion,
+    attribution_mass_inside_lesion_plus_margin,
+    pointing_game_accuracy,
+    soft_dice,
+    saliency_iou,
+    LocalizationResult,
+    compute_localization_metrics,
+    compute_localization_batch,
+    DEFAULT_IOU_THRESHOLD,
 )
