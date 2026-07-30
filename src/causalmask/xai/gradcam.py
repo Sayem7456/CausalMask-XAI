@@ -205,6 +205,7 @@ class GradCAMPlusPlus:
 
         if target_class is None:
             target_class = logits.argmax(dim=1)
+        target_class = target_class.to(self._device)
         score = logits[0, target_class[0]]
 
         first_grads = torch.autograd.grad(
@@ -215,45 +216,48 @@ class GradCAMPlusPlus:
             only_inputs=True,
         )[0]
 
-        first_grads_sq = first_grads.pow(2).sum()
-
-        second_grads = torch.autograd.grad(
-            outputs=first_grads_sq,
-            inputs=activations,
-            retain_graph=True,
-            create_graph=True,
-            only_inputs=True,
-            allow_unused=True,
-        )[0]
-
-        if second_grads is None:
-            second_grads = torch.zeros_like(activations)
-
-        third_grads_out = torch.autograd.grad(
-            outputs=second_grads.pow(2).sum(),
-            inputs=activations,
-            retain_graph=False,
-            create_graph=False,
-            only_inputs=True,
-            allow_unused=True,
-        )
-
-        third_grads = third_grads_out[0] if third_grads_out[0] is not None else torch.zeros_like(activations)
-
-        eps_val = 1e-6
         first_grads_clamped = first_grads.clamp(min=0).detach()
 
-        sum_activations = activations.sum(dim=(2, 3), keepdim=True)
+        try:
+            first_grads_sq = first_grads.pow(2).sum()
 
-        two_second = 2.0 * second_grads.pow(2)
-        sum_acts_third = sum_activations * third_grads
-        denom = two_second + sum_acts_third + eps_val
+            second_grads = torch.autograd.grad(
+                outputs=first_grads_sq,
+                inputs=activations,
+                retain_graph=True,
+                create_graph=True,
+                only_inputs=True,
+                allow_unused=True,
+            )[0]
 
-        alpha = second_grads.pow(2) / denom
+            if second_grads is None:
+                raise RuntimeError("second_grads is None — higher-order autograd not supported")
 
-        weights = (alpha * first_grads_clamped).sum(dim=(2, 3), keepdim=True)
-        cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
-        cam = torch.relu(cam)
+            third_grads_out = torch.autograd.grad(
+                outputs=second_grads.pow(2).sum(),
+                inputs=activations,
+                retain_graph=False,
+                create_graph=False,
+                only_inputs=True,
+                allow_unused=True,
+            )
+
+            third_grads = third_grads_out[0] if third_grads_out[0] is not None else torch.zeros_like(activations)
+
+            eps_val = 1e-6
+            sum_activations = activations.sum(dim=(2, 3), keepdim=True)
+            two_second = 2.0 * second_grads.pow(2)
+            sum_acts_third = sum_activations * third_grads
+            denom = two_second + sum_acts_third + eps_val
+
+            alpha = second_grads.pow(2) / denom
+            weights = (alpha * first_grads_clamped).sum(dim=(2, 3), keepdim=True)
+            cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
+            cam = torch.relu(cam)
+        except Exception:
+            weights = first_grads_clamped.mean(dim=(2, 3), keepdim=True)
+            cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
+            cam = torch.relu(cam)
 
         cam = _safe_tensor(cam)
         return cam

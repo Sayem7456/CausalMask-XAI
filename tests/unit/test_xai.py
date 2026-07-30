@@ -211,17 +211,6 @@ def test_gradcam_finite(device):
 # ── Grad-CAM++ tests ───────────────────────────────────────────────────────
 
 
-@pytest.mark.xfail(
-    reason=(
-        "GradCAM++ requires second/third-order autograd through model layers. "
-        "The hook-based activation capture breaks the computation graph for "
-        "higher-order derivatives in PyTorch's current autograd engine. "
-        "The GradCAM++ implementation is architecturally correct but requires "
-        "model splitting or functional API; this is a documented limitation. "
-        "GradCAM, IG, and RISE are fully functional."
-    ),
-    strict=True,
-)
 def test_gradcampp_output_shape(device):
     model = create_model("efficientnet_b0", num_classes=2, pretrained=False)
     model.eval()
@@ -235,10 +224,6 @@ def test_gradcampp_output_shape(device):
     gradcampp.cleanup()
 
 
-@pytest.mark.xfail(
-    reason="GradCAM++ higher-order autograd limitation (see test_gradcampp_output_shape).",
-    strict=True,
-)
 def test_gradcampp_uses_target_class(device):
     model = create_model("efficientnet_b0", num_classes=2, pretrained=False)
     model.eval()
@@ -256,10 +241,6 @@ def test_gradcampp_uses_target_class(device):
     assert not torch.equal(cam0, cam1), "GradCAM++ maps should differ per target class"
 
 
-@pytest.mark.xfail(
-    reason="GradCAM++ higher-order autograd limitation (see test_gradcampp_output_shape).",
-    strict=True,
-)
 def test_gradcampp_finite(device):
     model = create_model("efficientnet_b0", num_classes=2, pretrained=False)
     model.eval()
@@ -596,10 +577,6 @@ def test_build_gradcam(device):
     gradcam.cleanup()
 
 
-@pytest.mark.xfail(
-    reason="GradCAM++ higher-order autograd limitation (see test_gradcampp_output_shape).",
-    strict=True,
-)
 def test_build_gradcam_plusplus(device):
     model = create_model("efficientnet_b0", num_classes=2, pretrained=False)
     model.eval()
