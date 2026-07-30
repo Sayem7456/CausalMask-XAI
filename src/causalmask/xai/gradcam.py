@@ -117,6 +117,8 @@ class GradCAM:
 
         if target_classes is None:
             target_classes = logits.argmax(dim=1)
+        else:
+            target_classes = target_classes.to(self._device)
 
         one_hot = torch.zeros_like(logits)
         one_hot.scatter_(1, target_classes.unsqueeze(1), 1.0)
