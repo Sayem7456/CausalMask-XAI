@@ -200,7 +200,7 @@ class AttributionCache:
         pt_path = self._cache_dir / f"{key}.pt"
         if pt_path.exists():
             try:
-                data = torch.load(pt_path, map_location="cpu", weights_only=True)
+                data = torch.load(pt_path, map_location="cpu", weights_only=False)
                 entry = AttributionCacheEntry(
                     attribution=data["attribution"],
                     metadata=data.get("metadata", AttributionMetadata()),

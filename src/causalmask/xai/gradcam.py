@@ -148,8 +148,12 @@ class GradCAM:
 class GradCAMPlusPlus:
     """Grad-CAM++ attribution.
 
-    Computes higher-order gradients by manually propagating through
-    the model twice to keep the computation graph intact.
+    Creates a fresh attributor per sample to avoid CUDA autograd
+    graph accumulation from retain_graph=True.  The notebook's
+    per-sample loop calls attribute(image[0:1], target_class).
+
+    When higher-order autograd fails (hook-captured tensors cannot
+    be differentiated twice), falls back to first-order GradCAM weights.
     """
 
     def __init__(
@@ -159,17 +163,12 @@ class GradCAMPlusPlus:
         device: torch.device,
     ):
         self._model = model
-        self._model.eval()
         self._target_layer = target_layer
         self._device = device
-        self._activations: Optional[Tensor] = None
-        self._hook_handle = target_layer.register_forward_hook(self._capture_forward)
 
-    def _capture_forward(self, _m: nn.Module, _inp: Any, out: Tensor) -> None:
-        self._activations = out
-
-    def cleanup(self) -> None:
-        self._hook_handle.remove()
+    @staticmethod
+    def _capture_forward(_m: nn.Module, _inp: Any, out: Tensor) -> None:
+        GradCAMPlusPlus._activations = out
 
     def attribute(
         self,
@@ -184,28 +183,61 @@ class GradCAMPlusPlus:
                 if target_classes is not None
                 else None
             )
-            cam = self._attribute_single(single, tc)
+            cam = _gradcampp_single_frame(
+                self._model,
+                self._target_layer,
+                self._device,
+                single,
+                tc,
+            )
             results.append(cam)
         return torch.cat(results, dim=0)
 
-    def _attribute_single(
+    def attribute_batch(
         self,
-        image: Tensor,
-        target_class: Optional[Tensor] = None,
+        images: Tensor,
+        target_classes: Optional[Tensor] = None,
     ) -> Tensor:
-        self._model.zero_grad()
-        self._activations = None
+        return self.attribute(images, target_classes)
 
-        x = image.to(self._device).requires_grad_(True)
-        logits = self._model(x)
+    def cleanup(self) -> None:
+        pass
 
-        activations = self._activations
+
+def _gradcampp_single_frame(
+    model: nn.Module,
+    target_layer: nn.Module,
+    device: torch.device,
+    image: Tensor,
+    target_class: Optional[Tensor] = None,
+) -> Tensor:
+    """Single-sample GradCAM++ with fresh hooks per call.
+
+    Registers and removes hooks within this function so no retained
+    graph state leaks between samples.
+    """
+
+    activations: Optional[Tensor] = None
+    x: Optional[Tensor] = None
+    logits: Optional[Tensor] = None
+
+    def _fw_hook(_m: nn.Module, _inp: Any, out: Tensor) -> None:
+        nonlocal activations
+        activations = out
+
+    handle = target_layer.register_forward_hook(_fw_hook)
+
+    try:
+        model.zero_grad()
+        x = image.to(device).requires_grad_(True)
+        logits = model(x)
+
         if activations is None:
             raise RuntimeError("No activations captured.")
 
         if target_class is None:
             target_class = logits.argmax(dim=1)
-        target_class = target_class.to(self._device)
+        target_class = target_class.to(device)
         score = logits[0, target_class[0]]
 
         first_grads = torch.autograd.grad(
@@ -218,56 +250,69 @@ class GradCAMPlusPlus:
 
         first_grads_clamped = first_grads.clamp(min=0).detach()
 
-        try:
-            first_grads_sq = first_grads.pow(2).sum()
+        cam = _compute_gradcampp_cam(activations, first_grads, first_grads_clamped)
 
-            second_grads = torch.autograd.grad(
-                outputs=first_grads_sq,
-                inputs=activations,
-                retain_graph=True,
-                create_graph=True,
-                only_inputs=True,
-                allow_unused=True,
-            )[0]
+    finally:
+        handle.remove()
+        del activations, x, logits
+        model.zero_grad()
 
-            if second_grads is None:
-                raise RuntimeError("second_grads is None — higher-order autograd not supported")
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
 
-            third_grads_out = torch.autograd.grad(
-                outputs=second_grads.pow(2).sum(),
-                inputs=activations,
-                retain_graph=False,
-                create_graph=False,
-                only_inputs=True,
-                allow_unused=True,
-            )
+    cam = _safe_tensor(cam)
+    return cam
 
-            third_grads = third_grads_out[0] if third_grads_out[0] is not None else torch.zeros_like(activations)
 
-            eps_val = 1e-6
-            sum_activations = activations.sum(dim=(2, 3), keepdim=True)
-            two_second = 2.0 * second_grads.pow(2)
-            sum_acts_third = sum_activations * third_grads
-            denom = two_second + sum_acts_third + eps_val
+def _compute_gradcampp_cam(
+    activations: Tensor,
+    first_grads: Tensor,
+    first_grads_clamped: Tensor,
+) -> Tensor:
+    """Compute GradCAM++ CAM, falling back to first-order on failure."""
+    try:
+        first_grads_sq = first_grads.pow(2).sum()
 
-            alpha = second_grads.pow(2) / denom
-            weights = (alpha * first_grads_clamped).sum(dim=(2, 3), keepdim=True)
-            cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
-            cam = torch.relu(cam)
-        except Exception:
-            weights = first_grads_clamped.mean(dim=(2, 3), keepdim=True)
-            cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
-            cam = torch.relu(cam)
+        second_grads = torch.autograd.grad(
+            outputs=first_grads_sq,
+            inputs=activations,
+            retain_graph=True,
+            create_graph=True,
+            only_inputs=True,
+            allow_unused=True,
+        )[0]
 
-        cam = _safe_tensor(cam)
+        if second_grads is None:
+            raise RuntimeError("second_grads is None — higher-order autograd not supported")
+
+        third_grads_out = torch.autograd.grad(
+            outputs=second_grads.pow(2).sum(),
+            inputs=activations,
+            retain_graph=False,
+            create_graph=False,
+            only_inputs=True,
+            allow_unused=True,
+        )
+
+        third_grads = third_grads_out[0] if third_grads_out[0] is not None else torch.zeros_like(activations)
+
+        eps_val = 1e-6
+        sum_activations = activations.sum(dim=(2, 3), keepdim=True)
+        two_second = 2.0 * second_grads.pow(2)
+        sum_acts_third = sum_activations * third_grads
+        denom = two_second + sum_acts_third + eps_val
+
+        alpha = second_grads.pow(2) / denom
+        weights = (alpha * first_grads_clamped).sum(dim=(2, 3), keepdim=True)
+        cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
+        cam = torch.relu(cam)
         return cam
 
-    def attribute_batch(
-        self,
-        images: Tensor,
-        target_classes: Optional[Tensor] = None,
-    ) -> Tensor:
-        return self.attribute(images, target_classes)
+    except Exception:
+        weights = first_grads_clamped.mean(dim=(2, 3), keepdim=True)
+        cam = (weights * activations.detach()).sum(dim=1, keepdim=True)
+        cam = torch.relu(cam)
+        return cam
 
 
 def _safe_tensor(t: Tensor) -> Tensor:
