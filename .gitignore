@@ -50,3 +50,14 @@ Thumbs.db
 # Reports that should not be version-controlled
 reports/results/*.png
 reports/results/*.pdf
+reports/results/*.parquet
+reports/results/*.csv
+reports/results/*_metrics.json
+reports/results/*_predictions.json
+reports/results/*_paired.json
+reports/results/*_table.json
+reports/results/metric_integrity_report.json
+reports/results/metric_integrity.md
+# Keep frozen config and reports as exception
+!reports/results/frozen_causal_configuration.yaml
+!reports/results/*.md
