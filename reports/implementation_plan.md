@@ -136,3 +136,33 @@
 ## Phase 10 — Final Report [PLANNED]
 
 - Figures, tables, paper preparation
+
+## Phase 11 — Robustness, Sanity Checks, and Ablations [IMPLEMENTED]
+
+**Part A: Explanation Robustness**
+- Horizontal flip (with geometric inverse)
+- Mild contrast adjustment (factor 1.1)
+- Mild gamma correction (gamma 1.1)
+- Small translation (5 pixels, with geometric inverse)
+- Mild speckle noise (std 0.02)
+- Prediction stability, probability change, Spearman rho, SSIM, top-k overlap
+- Reports prediction change alongside explanation change
+
+**Part B: Sanity Checks**
+- Progressive model-parameter randomization (6 fractions: 0.0–1.0)
+- Intensity baseline
+- Edge baseline (Sobel)
+- Center-prior baseline (Gaussian)
+- Randomization-degradation curves via GradCAM
+- Label-randomization control: not feasible in this phase (training cost)
+- Failed XAI methods disclosed: GradCAM++ higher-order autograd limitation
+
+**Part C: Required Ablations**
+- Ablation matrix: 22 entries covering loss components, margins, operators, gating, aggregation, architecture, controls
+- 4 validated, 11 implemented, 7 planned
+- Sham controls and operator sensitivity reported
+- BUS-UCLM remains frozen
+
+**Notebook:** `notebooks/11_robustness_sanity_and_ablations.ipynb`
+**Status:** implemented (structurally complete; real execution requires Colab with prior-phase checkpoints)
+**Gate:** structurally complete; real execution requires Colab + Drive
