@@ -18,49 +18,74 @@ This project implements a **causal auditing and training framework** for breast-
 | 7 | CausalMask metrics on frozen baseline models | Done — executed |
 | 8 | Causal regularization one-fold pilot | Done — executed |
 | 9 | XAI methods and faithfulness evaluation | Done — executed |
-| **10** | **Causal five-fold cross-validation** | **Done — validated** |
-| 11–12 | Ablations, bootstrap, external validation, reporting | Planned |
+| 10 | Causal five-fold cross-validation | Done — validated |
+| **11** | **Robustness, sanity checks, and ablations** | **Done — executed** |
+| **11b** | **Ablation scientific evidence (five-fold OOF)** | **Done — executed** |
+| 12 | External validation (BUS-UCLM) | Planned |
 
-### Phase 7: CausalMask metrics on baseline (executed 2026-07-29 on Colab T4)
+### Phase 7: CausalMask metrics on baseline
 
-- **544 samples** processed across 5 folds with causal component metrics
-- **103 failed samples** recorded with explicit reasons
-- **3 margins** (0%, 10%, 20%), **2 removal operators** (Telea, Navier-Stokes), **2 donor classes** (same, opposite), **2 target definitions** (predicted, true)
-- **3 donors per sample** for stable background-invariance estimates
-- **1,632 metric records** saved to `reports/results/baseline_causal_components.parquet`
-- Component metrics, sham controls, and composite CausalMask score computed
+- 544 samples processed across 5 folds with causal component metrics
+- 3 margins, 2 removal operators, 2 donor classes, 2 target definitions
+- Sham controls, composite CausalMask score computed
 - No model retrained — frozen baseline checkpoints only
-- BUS-UCLM never loaded
 
-### Phase 8: Causal regularization pilot (executed 2026-07-30 on Colab T4)
+### Phase 8: Causal regularization pilot
 
-- **One-fold pilot** (fold 0) with full causal training objective
-- CE + sufficiency consistency + background consistency + gated necessity ranking
-- 3-epoch CE warm-up, 3-epoch necessity ramp, confidence threshold 0.6
+- One-fold pilot (fold 0) with full causal training objective
+- CE + sufficiency + background + gated necessity ranking
 - Config frozen as `reports/results/frozen_causal_configuration.yaml`
-- Results labelled exploratory — five-fold validation deferred to Phase 10
-- BUS-UCLM never loaded
+- Results labelled exploratory
 
-### Phase 9: XAI methods and faithfulness (executed 2026-07-31 on Colab T4)
+### Phase 9: XAI methods and faithfulness
 
-- **4 XAI methods** evaluated: Grad-CAM, Grad-CAM++, Integrated Gradients (50 steps), RISE (1000 masks)
-- **101 test samples** per method on fold 0 (baseline + causal pilot)
-- **0 failures** across all methods on baseline
-- Localization and faithfulness metrics (insertion/deletion AUC, pointing game, soft Dice, IoU)
-- Target layers explicitly resolved per architecture (`features` for EfficientNet-B0)
-- Grad-CAM++ has known autograd limitation (4 tests xfailed) — not a defect
-- Attribution caching by model checkpoint digest for resume safety
+- 4 XAI methods: Grad-CAM, Grad-CAM++, Integrated Gradients (50 steps), RISE (1000 masks)
+- 101 test samples per method on fold 0 (baseline + causal pilot)
+- Localization and faithfulness metrics (insertion/deletion AUC, soft Dice, IoU)
 
-### Phase 10: Causal five-fold cross-validation (executed 2026-08-01 on Colab T4)
+### Phase 10: Causal five-fold cross-validation
 
-- **All 5 folds validated** using frozen Phase 8 configuration
-- EfficientNet-B0 backbone, full causal objective, 20 epochs per fold
-- Per-sample causal components: necessity, sufficiency, background invariance, prediction flips
+- All 5 folds validated using frozen Phase 8 configuration
 - Paired comparison against baseline (Wilcoxon p=0.0000)
-- Denominator reconciliation: baseline=647, causal=647 (match verified)
+- Denominator reconciliation: baseline=647, causal=647 (verified)
 - Donor-leakage tests pass across all 5 folds
-- BUS-UCLM never loaded
-- Phase gate: passed
+
+### Phase 11: Robustness, sanity checks, and ablations
+
+- **Explanation robustness** evaluated on 5 diagnosis-preserving transforms
+  - Horizontal flip, contrast, gamma, translation, speckle noise
+  - Prediction stability reported alongside explanation stability
+- **Sanity checks:** progressive parameter randomization (GradCAM), intensity/edge/center-prior baselines
+- **Ablation matrix:** 22 entries with terminal states (4 validated, 11 implemented, 7 planned)
+- Failed XAI methods disclosed (GradCAM++ autograd limitation)
+- 185 unit tests pass locally; all pass in Colab
+- Outputs: `xai_robustness_metrics.parquet`, `xai_sanity_metrics.parquet`, `xai_randomization_curves/`, `ablation_matrix.csv`
+
+### Phase 11b: Ablation scientific evidence (five-fold OOF)
+
+- **6 models** evaluated via OOF aggregation across 5 folds (647 samples each):
+  Baseline CE, Full Causal, A02 (Necessity only), A03 (Sufficiency only),
+  A04 (Background only), G01 (Gating disabled)
+- **Classification metrics:** AUROC, Balanced Accuracy, F1, PR-AUC, ECE, Brier
+- **Causal components:** Lesion necessity, sufficiency, background invariance
+- **Paired statistical tests:** Wilcoxon signed-rank across 9 model pairs
+- Fold-0 retained as exploratory; OOF evidence is primary scientific evidence
+- Outputs: `ablation_scientific_summary.parquet`, `ablation_paired_tests.json`, `ablation_component_comparison.md`
+
+**Key evidence across all phases:**
+
+| Metric | Value |
+|--------|-------|
+| Split digest | `2a88e7ada1aff73e245d...` |
+| Manifest digest | `6462d283b3fcfe6657ec...` |
+| BUS-UCLM loaded during development | Never |
+| Group disjointness | Verified across all folds |
+| Donor-leakage tests | Passed |
+| Baseline OOF AUROC | 0.7869 |
+| Full Causal OOF AUROC | 0.7396 |
+| Split seed | 42 |
+| Backbone | EfficientNet-B0 |
+| GPU used | Tesla T4 (Colab Free) |
 
 ## Datasets
 
@@ -95,15 +120,17 @@ src/causalmask/
   evaluation/
     classification.py    — AUROC, balanced accuracy, sensitivity, specificity, F1, Youden threshold
     calibration.py       — ECE, MCE, Brier score
-    causalmask_score.py  — Composite CausalMask score (harmonic mean of necessity, sufficiency, invariance)
+    causalmask_score.py  — Composite CausalMask score (harmonic mean)
     faithfulness.py      — Insertion/deletion AUC, prediction-flip metrics
     localization.py      — Attribution mass, pointing game, soft Dice, IoU
+    robustness.py        — Explanation robustness (5 transforms, Spearman, SSIM, top-k)
+    sanity.py            — Parameter randomization, intensity/edge/center baselines
   xai/
-    base.py              — Common XAI interface (attribute, normalize, resize)
-    gradcam.py           — Grad-CAM and Grad-CAM++ implementations
-    integrated_gradients.py — Integrated Gradients (Captum)
+    base.py              — Common XAI interface
+    gradcam.py           — Grad-CAM and Grad-CAM++
+    integrated_gradients.py — Integrated Gradients
     rise.py              — RISE (Randomized Input Sampling for Explanation)
-    normalization.py     — Min-max, percentile, and no-op normalization
+    normalization.py     — Min-max, percentile normalization
   statistics/
     bootstrap.py         — Group-level stratified bootstrap confidence intervals
   reproducibility.py     — Seed management, environment capture
@@ -119,19 +146,22 @@ notebooks/
   08_causal_regularization_one_fold_pilot.ipynb
   09_xai_methods_and_faithfulness.ipynb
   10_causal_five_fold_cross_validation.ipynb
+  11_robustness_sanity_and_ablations.ipynb
+  11b_ablation_five_fold_scientific.ipynb
 tests/
   unit/                  — Unit tests for all modules
 ```
 
 ## Key design decisions
 
-- **Duplicate-group splitting**: Images are grouped by SHA-256 exact duplicates and pHash+SSIM near-duplicates before 5-fold split. No patient-level splitting (BUSI lacks reliable patient IDs).
+- **Duplicate-group splitting**: Images are grouped by SHA-256 exact duplicates and pHash+SSIM near-duplicates before 5-fold split.
 - **No external data leakage**: BUS-UCLM is never loaded during development or validation. It is frozen for external validation.
-- **Deterministic run IDs**: `make_fold_run_id` / `make_causal_run_id` use (fold, seed) — no timestamps — so checkpoint resume works across Colab disconnections.
-- **Google Drive sync**: All artifacts (runs, reports, manifests, splits) sync to Drive for persistence across Colab sessions.
-- **Partition-local donors**: Background-swap donors always come from the same active partition (training, validation, or test). No cross-partition leakage.
-- **Frozen configuration**: Five-fold causal training uses the exact configuration frozen at the end of the Phase 8 pilot (`reports/results/frozen_causal_configuration.yaml`).
+- **ImageNet normalization**: All training and inference uses ImageNet normalization (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]). Robustness transforms handle the unnormalize→transform→renormalize cycle.
+- **Partition-local donors**: Background-swap donors always come from the same active partition. No cross-partition leakage.
+- **Frozen configuration**: Five-fold causal training uses the exact configuration frozen at the end of the Phase 8 pilot.
 - **Conservative GPU settings**: Batch size 16, AMP enabled, gradient clipping 1.0 — suitable for single Colab T4 GPU.
+- **Deterministic run IDs**: `make_fold_run_id` use (fold, seed) — no timestamps — so checkpoint resume works across Colab disconnections.
+- **Google Drive sync**: All artifacts sync to Drive for persistence across Colab sessions.
 
 ## Setup
 
@@ -153,9 +183,8 @@ pytest tests/
 
 | Phase | Milestone |
 |-------|-----------|
-| 11 | Ablations — loss components, margin ratios, removal operators, architecture, necessity gating, donor class |
 | 12 | BUS-UCLM untouched external validation |
-| 13 | Bootstrap confidence intervals, paired statistical tests, Holm correction |
+| 13 | Bootstrap confidence intervals, Holm correction, final statistical aggregation |
 | 14 | Paper-ready reporting, figures, reproducibility audit |
 
 ## Reference
