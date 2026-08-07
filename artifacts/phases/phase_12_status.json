@@ -1,0 +1,112 @@
+{
+  "phase": "12",
+  "name": "External Validation BUS-UCLM",
+  "timestamp_utc": "2026-08-07T05:44:30.559208+00:00",
+  "project_root": "/Users/sayemahmed/Personal/AI research/CausalMask-XAI",
+  "config": {
+    "phase": "12",
+    "phase_name": "External Validation BUS-UCLM",
+    "seed": 42,
+    "backbone": "efficientnet_b0",
+    "pretrained_weight_id": "EfficientNet_B0_Weights.IMAGENET1K_V1",
+    "num_classes": 2,
+    "binary_classes": [
+      "benign",
+      "malignant"
+    ],
+    "input_size": [
+      224,
+      224
+    ],
+    "counterfactual": {
+      "margin_ratio": 0.05,
+      "blur_sigma": 20.0,
+      "removal_operator": "telea",
+      "n_donors_per_sample": 3
+    },
+    "xai_methods": [
+      "gradcam",
+      "gradcampp",
+      "integrated_gradients",
+      "rise"
+    ],
+    "bootstrap_config": {
+      "n_replicates": 2000,
+      "confidence_level": 0.95
+    },
+    "split_name": "busi_binary_grouped_5fold_v1",
+    "external_datasets": [
+      "bus_uclm"
+    ],
+    "bus_uclm_role": "frozen_external_validation",
+    "manifest_version": "v1",
+    "experiment_note": "External validation on frozen BUS-UCLM dataset. No fine-tuning, threshold tuning, or calibration fitting. Pre-execution freeze written before any BUS-UCLM access."
+  },
+  "use_real_data": false,
+  "notebook_created": true,
+  "notebook_path": "notebooks/12_external_validation_bus_uclm.ipynb",
+  "notebook_cells": 55,
+  "smoke_mode": true,
+  "files_created": [
+    "notebooks/12_external_validation_bus_uclm.ipynb"
+  ],
+  "gate_criteria": {
+    "freeze_artifact_predates_bus_uclm_loading": "pending_real_execution",
+    "no_checkpoint_selection_occurred": "pending_real_execution",
+    "no_fine_tuning_occurred": "pending_real_execution",
+    "no_threshold_tuning_occurred": "pending_real_execution",
+    "no_calibration_fitting_occurred": "pending_real_execution",
+    "preprocessing_remained_frozen": "pending_real_execution",
+    "normalization_remained_frozen": "pending_real_execution",
+    "ensemble_remained_frozen": "pending_real_execution",
+    "post_processing_remained_frozen": "pending_real_execution",
+    "donor_isolation_verified": "pending_real_execution",
+    "leakage_audit_passed": "pending_real_execution",
+    "internal_run_ids_trace_every_prediction": "pending_real_execution",
+    "confidence_intervals_reported": "pending_real_execution",
+    "calibration_reported": "pending_real_execution",
+    "internal_vs_external_comparison_completed": "pending_real_execution",
+    "dataset_shift_documented": "pending_real_execution",
+    "failure_analysis_completed": "pending_real_execution",
+    "bus_uclm_remained_untouched_until_freeze_done": "pending_real_execution"
+  },
+  "phase_gate_passed": false,
+  "status_label": "implemented",
+  "status_note": "Notebook structurally complete. Real execution requires Colab with Google Drive containing Phase 5 (baseline) and Phase 10 (causal) checkpoints, BUSI and BUS-UCLM data, splits, and manifests. All prior phases (1-11) must have been executed before running this notebook.",
+  "deviations": [],
+  "outputs_expected": [
+    "reports/external_validation_freeze.json",
+    "reports/external_donor_audit.json",
+    "reports/external_leakage_audit.json",
+    "reports/external_reproducibility.json",
+    "reports/results/external_predictions_baseline.parquet",
+    "reports/results/external_predictions_causal.parquet",
+    "reports/results/external_metrics.json",
+    "reports/results/external_causal_components.parquet",
+    "reports/results/external_xai_summary.parquet",
+    "reports/results/external_localization.parquet",
+    "reports/results/external_faithfulness.parquet",
+    "reports/results/external_robustness.parquet",
+    "reports/results/external_statistics.json",
+    "reports/results/internal_vs_external_table.csv",
+    "reports/results/dataset_shift_report.md",
+    "reports/results/external_validation_report.md",
+    "reports/results/external_failure_cases/",
+    "artifacts/phases/phase_12_status.json"
+  ],
+  "next_phase_note": "Phase 12 is the final phase per instructions. Stop after Phase 12.",
+  "registered_split_digest": "2a88e7ada1aff73e245d6d8b48693aaebb45ce5ad7568f6753f25cce4935f151",
+  "registered_manifest_digest": "6462d283b3fcfe6657ece48daa8b7a0b09dc786bbfb34ed990c7d4d904f84304",
+  "prerequisite_phases_executed": [
+    "05",
+    "10",
+    "11",
+    "11b"
+  ],
+  "environment_known": {
+    "python": "3.12.13",
+    "torch": "2.11.0+cu128",
+    "gpu": "Tesla T4",
+    "cuda": "12.8"
+  }
+}

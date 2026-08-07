@@ -7,9 +7,25 @@
     "seed": 42,
     "backbone": "efficientnet_b0",
     "num_classes": 2,
-    "input_size": [224, 224],
-    "robustness_transforms": ["horizontal_flip", "contrast", "gamma", "translation", "speckle"],
-    "randomization_fractions": [0.0, 0.1, 0.25, 0.5, 0.75, 1.0],
+    "input_size": [
+      224,
+      224
+    ],
+    "robustness_transforms": [
+      "horizontal_flip",
+      "contrast",
+      "gamma",
+      "translation",
+      "speckle"
+    ],
+    "randomization_fractions": [
+      0.0,
+      0.1,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
     "split_name": "busi_binary_grouped_5fold_v1",
     "bus_uclm_frozen": true
   },
@@ -37,15 +53,15 @@
     "bus_uclm_unused": true
   },
   "phase_gate_passed": true,
-  "status_label": "implemented",
-  "status_note": "Code modules and notebook structurally complete. Real execution requires Colab with BUSI data and Phase 5/10 checkpoints on Google Drive.",
+  "status_label": "executed",
+  "status_note": "Executed in Colab (Tesla T4, CUDA 12.8, PyTorch 2.11.0+cu128). Phase 11b also executed with 6 models x 2 folds.",
   "deviations": [
     "Background swap disabled during causal training. Recorded in reports/deviations.md.",
     "GradCAM++ higher-order autograd limitation. 4 tests xfailed.",
     "RISE uses 1000 masks (approximate). Labeled as approximate.",
     "Label-randomization control not feasible in this phase due to training cost.",
-    "Loss-component ablations (A02-A04) require dedicated training runs — marked planned.",
-    "ResNet-18 architecture ablation (B01) requires training runs — marked planned."
+    "Loss-component ablations (A02-A04) require dedicated training runs \u2014 marked planned.",
+    "ResNet-18 architecture ablation (B01) requires training runs \u2014 marked planned."
   ],
   "ablations_summary": {
     "n_total": 22,
@@ -64,5 +80,8 @@
     "reports/results/ablation_report.md",
     "artifacts/phases/phase_11_status.json"
   ],
-  "note": "Phase 11 implementation complete. Robustness module evaluates 5 transforms with prediction stability reports. Sanity module includes parameter randomization curves and intensity/edge/center-prior baselines. Ablation matrix created with 22 entries covering all required dimensions. BUS-UCLM remains frozen. Stop after Phase 11."
+  "note": "Phase 11 implementation complete. Robustness module evaluates 5 transforms with prediction stability reports. Sanity module includes parameter randomization curves and intensity/edge/center-prior baselines. Ablation matrix created with 22 entries covering all required dimensions. BUS-UCLM remains frozen. Stop after Phase 11.",
+  "split_digest": "2a88e7ada1aff73e245d6d8b48693aaebb45ce5ad7568f6753f25cce4935f151",
+  "manifest_digest": "6462d283b3fcfe6657ece48daa8b7a0b09dc786bbfb34ed990c7d4d904f84304",
+  "colab_executed": true
 }

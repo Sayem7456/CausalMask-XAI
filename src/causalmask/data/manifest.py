@@ -162,6 +162,19 @@ def _discover_labeled_images(data_root: Path) -> list[dict]:
                 entry["image"] = f
 
         for base_stem, entry in image_map.items():
+            if entry["image"] is None and entry["masks"]:
+                # BUS-UCLM malignant images may contain "_mask" in
+                # filename, triggering the is_mask heuristic for every
+                # file. Check whether the first "mask" is actually an
+                # RGB image and promote it if so; otherwise skip.
+                candidate = entry["masks"][0]
+                try:
+                    from PIL import Image as PILImage
+                    probe = PILImage.open(candidate)
+                    if probe.mode in ("RGB", "RGBA", "L", "I", "F"):
+                        entry["image"] = entry["masks"].pop(0)
+                except Exception:
+                    candidate = None
             if entry["image"] is None:
                 continue
             samples.append(
