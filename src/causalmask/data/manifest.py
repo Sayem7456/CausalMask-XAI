@@ -37,7 +37,7 @@ def compute_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-_LABEL_MAP = {"benign": "benign", "malignant": "malignant", "normal": "normal"}
+_LABEL_MAP = {"benign": "benign", "malignant": "malignant", "malign": "malignant", "normal": "normal"}
 
 
 def normalize_label(label: str) -> str:
